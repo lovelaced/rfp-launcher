@@ -1,9 +1,16 @@
 import { client, typedApi } from "@/chain";
-import { BLOCK_LENGTH, TOKEN_DECIMALS } from "@/constants";
-import { state, withDefault } from "@react-rxjs/core";
+import { BLOCK_LENGTH, STABLE_RATE } from "@/constants";
+import { state } from "@react-rxjs/core";
 import { add } from "date-fns";
-import { combineLatest, filter, map, switchMap } from "rxjs";
-import { bountyValue$ } from "./price";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  filter,
+  map,
+  switchMap,
+} from "rxjs";
+import { formValue$ } from "./formValue";
+import { bountyValue$, currencyIsStables$, priceToChainAmount } from "./price";
 import { referendaDuration } from "./referendaConstants";
 
 const getNextTreasurySpend = async (block: number) => {
@@ -16,14 +23,32 @@ const getNextTreasurySpend = async (block: number) => {
 };
 
 export const referendumExecutionBlocks$ = state(
-  combineLatest([client.finalizedBlock$, bountyValue$]).pipe(
-    switchMap(async ([currentBlock, bountyValue]) => {
+  combineLatest([
+    client.finalizedBlock$,
+    currencyIsStables$,
+    bountyValue$,
+  ]).pipe(
+    switchMap(async ([currentBlock, isStables, bountyValue]) => {
       const currentBlockDate = new Date();
       const refDuration = await referendaDuration(
-        bountyValue ? BigInt(bountyValue * 10 ** TOKEN_DECIMALS) : null
+        bountyValue
+          ? priceToChainAmount(bountyValue) / (isStables ? STABLE_RATE : 1n)
+          : null,
       );
 
       const referendumEnd = currentBlock.number + refDuration;
+
+      if (isStables) {
+        // Stables through a multisig don't need to wait for a treasury spend
+        return {
+          currentBlock,
+          currentBlockDate,
+          referendumEnd,
+          bountyFunding: referendumEnd,
+          lateBountyFunding: null,
+          referendumSubmissionDeadline: null,
+        };
+      }
 
       const nextTreasurySpend = await getNextTreasurySpend(referendumEnd);
       const bountyFunding = nextTreasurySpend.next;
@@ -40,12 +65,12 @@ export const referendumExecutionBlocks$ = state(
         lateBountyFunding,
         referendumSubmissionDeadline,
       };
-    })
+    }),
   ),
-  null
+  null,
 );
 
-export const estimatedTimeline$ = referendumExecutionBlocks$.pipeState(
+const estimatedReferendumTimeline$ = referendumExecutionBlocks$.pipe(
   filter((v) => !!v),
   map(
     ({
@@ -64,12 +89,33 @@ export const estimatedTimeline$ = referendumExecutionBlocks$.pipeState(
       return {
         referendumDeadline: getBlockDate(referendumEnd),
         bountyFunding: getBlockDate(bountyFunding),
-        lateBountyFunding: getBlockDate(lateBountyFunding),
-        referendumSubmissionDeadline: getBlockDate(
-          referendumSubmissionDeadline
-        ),
+        lateBountyFunding: lateBountyFunding
+          ? getBlockDate(lateBountyFunding)
+          : null,
+        referendumSubmissionDeadline: referendumSubmissionDeadline
+          ? getBlockDate(referendumSubmissionDeadline)
+          : null,
       };
-    }
+    },
   ),
-  withDefault(null)
+);
+
+export const estimatedTimeline$ = state(
+  formValue$.pipe(
+    map((v) => v.isChildRfp),
+    distinctUntilChanged(),
+    switchMap((isChild) =>
+      isChild
+        ? [
+            {
+              referendumDeadline: null,
+              bountyFunding: new Date(),
+              lateBountyFunding: null,
+              referendumSubmissionDeadline: null,
+            },
+          ]
+        : estimatedReferendumTimeline$,
+    ),
+  ),
+  null,
 );

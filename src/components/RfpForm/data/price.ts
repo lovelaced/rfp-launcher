@@ -1,28 +1,82 @@
-import { REFERENDUM_PRICE_BUFFER } from "@/constants";
-import { DeepPartialSkipArrayKey } from "react-hook-form";
-import { FormSchema, parseNumber } from "../formSchema";
-import { createSignal } from "@react-rxjs/utils";
-import { state } from "@react-rxjs/core";
+import {
+  REFERENDUM_PRICE_BUFFER,
+  STABLE_INFO,
+  TOKEN_DECIMALS,
+} from "@/constants";
+import { currencyRate$ } from "@/services/currencyRate";
+import { state, withDefault } from "@react-rxjs/core";
+import { combineLatest, map } from "rxjs";
+import { parseNumber } from "../formSchema";
+import { formValue$ } from "./formValue";
 
-export const calculatePriceTotals = (
-  formFields: DeepPartialSkipArrayKey<FormSchema>,
-  conversionRate: number | null
+const calculatePriceTotals = (
+  values: (string | number)[],
+  conversionRate: number,
 ) => {
-  const totalAmount = [
-    formFields.prizePool,
-    formFields.findersFee,
-    formFields.supervisorsFee,
-  ]
+  const totalAmount = values
     .map(parseNumber)
-    .filter((v) => v != null)
+    .filter((v) => v !== null)
     .reduce((a, b) => a + b, 0);
-  const totalAmountToken = conversionRate ? totalAmount / conversionRate : null;
-  const totalAmountWithBuffer = totalAmountToken
-    ? Math.ceil(totalAmountToken * (1 + REFERENDUM_PRICE_BUFFER))
-    : null;
+  const totalAmountToken = totalAmount / conversionRate;
+  const totalAmountWithBuffer = Math.ceil(
+    totalAmountToken * (1 + REFERENDUM_PRICE_BUFFER),
+  );
 
   return { totalAmount, totalAmountToken, totalAmountWithBuffer };
 };
 
-export const [setBountyValue$, setBountyValue] = createSignal<number | null>();
-export const bountyValue$ = state(setBountyValue$, null);
+export const priceToChainAmount = (value: number) =>
+  BigInt(Math.round(value * 10 ** TOKEN_DECIMALS));
+
+export const priceTotals$ = state(
+  combineLatest({
+    formValue: formValue$,
+    rate: currencyRate$,
+  }).pipe(
+    map(({ formValue, rate }) => {
+      if (
+        formValue.prizePool == null ||
+        formValue.findersFee == null ||
+        formValue.supervisorsFee == null ||
+        rate == null
+      )
+        return null;
+
+      const r = calculatePriceTotals(
+        [formValue.prizePool, formValue.findersFee, formValue.supervisorsFee],
+        rate,
+      );
+      return r;
+    }),
+  ),
+  null,
+);
+
+export const bountyCurrency$ = formValue$.pipeState(
+  map((value) => value.fundingCurrency ?? null),
+  withDefault(null),
+);
+
+export const currencyIsStables$ = bountyCurrency$.pipeState(
+  map((currency) => !!STABLE_INFO?.[currency ?? ""]),
+  withDefault(false),
+);
+
+export const bountyValue$ = state(
+  combineLatest({
+    priceTotals: priceTotals$,
+    isStable: currencyIsStables$,
+    isChild: formValue$.pipe(map((v) => v?.isChildRfp ?? false)),
+  }).pipe(
+    map(({ priceTotals, isStable, isChild }) => {
+      if (!priceTotals || isStable == null) return null;
+
+      return isStable
+        ? priceTotals.totalAmount
+        : isChild
+          ? priceTotals.totalAmountToken
+          : priceTotals.totalAmountWithBuffer;
+    }),
+  ),
+  null,
+);

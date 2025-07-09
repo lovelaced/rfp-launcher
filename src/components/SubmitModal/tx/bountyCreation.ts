@@ -1,19 +1,14 @@
 import { typedApi } from "@/chain";
-import {
-  calculatePriceTotals,
-  generateMarkdown,
-  identity$,
-  signerBalance$,
-} from "@/components/RfpForm/data";
+import { matchedChain } from "@/chainRoute";
+import { priceTotals$, signerBalance$ } from "@/components/RfpForm/data";
 import { FormSchema } from "@/components/RfpForm/formSchema";
 import { selectedAccount$ } from "@/components/SelectAccount";
 import { REMARK_TEXT, TOKEN_DECIMALS } from "@/constants";
 import { formatToken } from "@/lib/formatToken";
-import { currencyRate$ } from "@/services/currencyRate";
+import { accId } from "@/lib/ss58";
 import { novasamaProvider } from "@polkadot-api/sdk-accounts";
 import { createBountiesSdk } from "@polkadot-api/sdk-governance";
 import {
-  AccountId,
   getMultisigAccountId,
   sortMultisigSignatories,
 } from "@polkadot-api/substrate-bindings";
@@ -24,33 +19,29 @@ import { submittedFormData$ } from "../modalActions";
 import { createTxProcess } from "./txProcess";
 import { TxWithExplanation } from "./types";
 
-const totalAmount$ = (formData: FormSchema) =>
-  currencyRate$.pipe(
-    map(
-      (currencyRate) =>
-        calculatePriceTotals(formData, currencyRate).totalAmountWithBuffer
-    ),
+const totalAmount$ = () =>
+  priceTotals$.pipe(
+    map((v) => v?.totalAmountWithBuffer ?? null),
     filter((v) => v != null),
     map((v) => {
       // The amount is an approximation (with the +25% buffer), no need to have accurate math
       return BigInt(Math.round(v * Math.pow(10, TOKEN_DECIMALS)));
-    })
+    }),
   );
 
 const multisigCreationHash = Binary.fromHex("".padEnd(32 * 2, "00"));
 export const getCreationMultisigCallMetadata = (
   formData: FormSchema,
-  selectedAccount: string
+  selectedAccount: string,
 ) => {
-  const codec = AccountId();
   const multisigAddr = getMultisigAddress(formData);
   const sortedSignatories = sortMultisigSignatories(
-    formData.supervisors.map(codec.enc)
+    formData.supervisors.map(accId.enc),
   );
   const toHex = (v: Uint8Array) => Binary.fromBytes(v).asHex();
-  const selectedPk = toHex(codec.enc(selectedAccount));
+  const selectedPk = toHex(accId.enc(selectedAccount));
   const otherSignatories = sortedSignatories.filter(
-    (v) => toHex(v) !== selectedPk
+    (v) => toHex(v) !== selectedPk,
   );
   if (otherSignatories.length === sortedSignatories.length) return null;
 
@@ -58,7 +49,7 @@ export const getCreationMultisigCallMetadata = (
     multisigAddr,
     call_hash: multisigCreationHash,
     threshold: formData.signatoriesThreshold,
-    other_signatories: otherSignatories.map(codec.dec),
+    other_signatories: otherSignatories.map(accId.dec),
   };
 };
 
@@ -69,9 +60,9 @@ export const bountyCreationTx$ = state(
 
       const needsMultisigCreation$ =
         formData.supervisors.length > 1
-          ? from(novasamaProvider("kusama")(getMultisigAddress(formData))).pipe(
-              map((v) => !v)
-            )
+          ? from(
+              novasamaProvider(matchedChain)(getMultisigAddress(formData)),
+            ).pipe(map((v) => !v))
           : of(false);
 
       const shouldCreateMultisig$ = combineLatest([
@@ -85,7 +76,7 @@ export const bountyCreationTx$ = state(
           const multisigDepositCost =
             depositBase + BigInt(formData.supervisors.length) * depositFactor;
           return multisigDepositCost < signerFunds;
-        })
+        }),
       );
 
       const multisigMetadata$ = combineLatest([
@@ -96,12 +87,12 @@ export const bountyCreationTx$ = state(
           if (!shouldCreateMultisig) return null;
           return getCreationMultisigCallMetadata(
             formData,
-            selectedAccount.address
+            selectedAccount.address,
           );
-        })
+        }),
       );
 
-      return combineLatest([totalAmount$(formData), multisigMetadata$]).pipe(
+      return combineLatest([totalAmount$(), multisigMetadata$]).pipe(
         map(([value, multisigMeta]): TxWithExplanation => {
           const proposeBounty: TxWithExplanation = {
             tx: typedApi.tx.Bounties.propose_bounty({
@@ -138,7 +129,7 @@ export const bountyCreationTx$ = state(
                 ...multisigMeta,
                 max_weight: { proof_size: 0n, ref_time: 0n },
                 maybe_timepoint: undefined,
-              })
+              }),
             );
             explanations.push({
               text: "Multisig call to have the curator indexed",
@@ -157,57 +148,25 @@ export const bountyCreationTx$ = state(
               params: Object.fromEntries(Object.entries(explanations)),
             },
           };
-        })
+        }),
       );
-    })
-  )
-);
-
-export const bountyMarkdown$ = state(
-  combineLatest([
-    submittedFormData$.pipe(filter((v) => !!v)),
-    currencyRate$,
-  ]).pipe(
-    switchMap(([formFields, currencyRate]) => {
-      const { totalAmountWithBuffer } = calculatePriceTotals(
-        formFields,
-        currencyRate
-      );
-
-      const identities$ = combineLatest(
-        Object.fromEntries(
-          formFields.supervisors.map((addr) => [
-            addr,
-            identity$(addr).pipe(map((id) => id?.value)),
-          ])
-        )
-      );
-
-      return identities$.pipe(
-        map((identities) =>
-          generateMarkdown(formFields, totalAmountWithBuffer, identities)
-        )
-      );
-    })
+    }),
   ),
-  null
 );
 
 export const [bountyCreationProcess$, submitBountyCreation] = createTxProcess(
-  bountyCreationTx$.pipe(map((v) => v?.tx ?? null))
+  bountyCreationTx$.pipe(map((v) => v?.tx ?? null)),
 );
 
-const accountCodec = AccountId();
-
 const getMultisigAddress = (formData: FormSchema) =>
-  accountCodec.dec(
+  accId.dec(
     getMultisigAccountId({
       threshold: Math.min(
         formData.signatoriesThreshold,
-        formData.supervisors.length
+        formData.supervisors.length,
       ),
-      signatories: formData.supervisors.map(accountCodec.enc),
-    })
+      signatories: formData.supervisors.map(accId.enc),
+    }),
   );
 
 const bountiesSdk = createBountiesSdk(typedApi);
@@ -233,7 +192,7 @@ export const rfpBounty$ = state(
               }
             : null,
         };
-      })
+      }),
     ),
     // try and load existing one if it's there
     submittedFormData$.pipe(
@@ -247,19 +206,19 @@ export const rfpBounty$ = state(
           multisigAddr
             ? typedApi.query.Multisig.Multisigs.getValue(
                 multisigAddr,
-                multisigCreationHash
+                multisigCreationHash,
               )
             : Promise.resolve(null),
         ]);
         const bounty = bounties.find(
           (bounty) =>
             bounty.status.type === "Proposed" &&
-            bounty.description === formData.projectTitle
+            bounty.description === formData.projectTitle,
         );
 
         return { bounty: bounty!, multisigTimepoint: multisig?.when ?? null };
       }),
-      filter((v) => !!v.bounty)
-    )
-  )
+      filter((v) => !!v.bounty),
+    ),
+  ),
 );

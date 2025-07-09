@@ -1,9 +1,9 @@
-import { typedApi } from "@/chain";
-import { createReferendaSdk } from "@polkadot-api/sdk-governance";
+import { referendaSdk } from "@/chain";
 import { state } from "@react-rxjs/core";
 import { TxEvent } from "polkadot-api";
-import { combineLatest, map, Observable } from "rxjs";
+import { combineLatest, map, merge, Observable } from "rxjs";
 import { bountyCreationProcess$, bountyCreationTx$ } from "./tx/bountyCreation";
+import { childBountyProcess$, childBountyTx$ } from "./tx/childBounty";
 import {
   decisionDepositProcess$,
   decisionDepositTx$,
@@ -13,22 +13,23 @@ import {
   referendumCreationTx$,
   rfpReferendum$,
 } from "./tx/referendumCreation";
-import { TxWithExplanation } from "./tx/types";
+import {
+  treasurySpendProcess$,
+  treasurySpendRfpReferendum$,
+  treasurySpendTx$,
+} from "./tx/treasurySpend";
 
-const referendaSdk = createReferendaSdk(typedApi);
-
-const txProcessState = (
-  tx$: Observable<TxWithExplanation | null>,
+const txProcessState = <T>(
+  tx$: Observable<T | null>,
   process$: Observable<
     | TxEvent
     | {
         type: "error";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         err: any;
       }
     | null
   >,
-  tag: string
+  tag: string,
 ) =>
   combineLatest([tx$, process$]).pipe(
     map(([tx, process]) => {
@@ -64,19 +65,34 @@ const txProcessState = (
             },
           }
         : null;
-    })
+    }),
   );
 
-export const activeTxStep$ = state(
+export const activeBountyRfpTxStep$ = state(
   combineLatest([
     txProcessState(bountyCreationTx$, bountyCreationProcess$, "bounty"),
     txProcessState(referendumCreationTx$, referendumCreationProcess$, "ref"),
     txProcessState(decisionDepositTx$, decisionDepositProcess$, "decision"),
   ]).pipe(map((steps) => steps.reverse().reduce((a, b) => a || b, null))),
-  null
+  null,
+);
+
+export const activeMultisigRfpTxStep$ = state(
+  combineLatest([
+    txProcessState(treasurySpendTx$, treasurySpendProcess$, "ref"),
+    txProcessState(decisionDepositTx$, decisionDepositProcess$, "decision"),
+  ]).pipe(map((steps) => steps.reverse().reduce((a, b) => a || b, null))),
+  null,
 );
 
 export const referendumIndex$ = state(
-  rfpReferendum$.pipe(map((v) => v.index)),
-  undefined
+  merge(rfpReferendum$, treasurySpendRfpReferendum$).pipe(map((v) => v.index)),
+  undefined,
+);
+
+export const activeChildBountyTxStep$ = state(
+  combineLatest([
+    txProcessState(childBountyTx$, childBountyProcess$, "child-bounty"),
+  ]).pipe(map((steps) => steps.reverse().reduce((a, b) => a || b, null))),
+  null,
 );

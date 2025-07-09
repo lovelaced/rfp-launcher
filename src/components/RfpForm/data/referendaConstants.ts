@@ -1,20 +1,16 @@
-import { typedApi } from "@/chain";
+import { referendaSdk, typedApi } from "@/chain";
+import { dot, ksm } from "@polkadot-api/descriptors";
 import {
-  createReferendaSdk,
-  kusamaSpenderOrigin,
   PolkadotRuntimeOriginCaller,
   ReferendaTrack,
+  RuntimeOriginCaller,
 } from "@polkadot-api/sdk-governance";
 import { CompatibilityLevel } from "polkadot-api";
 
-const referendaSdk = createReferendaSdk(typedApi, {
-  spenderOrigin: kusamaSpenderOrigin,
-});
-
 export const getTrack = async (
-  value: bigint | null
+  value: bigint | null,
 ): Promise<{
-  origin: PolkadotRuntimeOriginCaller;
+  origin: RuntimeOriginCaller<typeof ksm> | RuntimeOriginCaller<typeof dot>;
   track: ReferendaTrack;
 }> => {
   const treasurerTrack = await referendaSdk.getTrack("treasurer");
@@ -31,18 +27,24 @@ export const getTrack = async (
     track: treasurerTrack,
   };
 
+  if (!value) {
+    return treasurer;
+  }
+
   // Scheduling needs treasurer track - If we can't approve with curator, then use that track.
   const isCompatible =
     await typedApi.tx.Bounties.approve_bounty_with_curator.isCompatible(
-      CompatibilityLevel.Partial
+      CompatibilityLevel.Partial,
     );
-  if (!value || !isCompatible) {
+  if (!isCompatible) {
     return treasurer;
   }
 
   const { track, origin } = referendaSdk.getSpenderTrack(value);
   return { track: await track, origin };
 };
+
+export const formatTrackName = (track: string) => track.replace(/_/g, " ");
 
 export const submissionDeposit =
   typedApi.constants.Referenda.SubmissionDeposit();
@@ -56,5 +58,5 @@ export const referendaDuration = (value: bigint | null) =>
       value.track.prepare_period +
       value.track.decision_period +
       value.track.confirm_period +
-      value.track.min_enactment_period
+      value.track.min_enactment_period,
   );
