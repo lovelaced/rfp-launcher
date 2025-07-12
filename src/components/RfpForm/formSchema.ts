@@ -1,7 +1,9 @@
-import type { Control } from "react-hook-form"
-import { z } from "zod"
+import type { Control } from "react-hook-form";
+import { z } from "zod";
 
 export const formSchema = z.object({
+  isChildRfp: z.boolean(),
+  parentBountyId: z.number().optional(),
   prizePool: z.coerce.number().positive(),
   findersFee: z.coerce.number(),
   supervisorsFee: z.coerce.number(),
@@ -18,22 +20,22 @@ export const formSchema = z.object({
       amount: z.coerce.number(),
     }),
   ),
-})
+  fundingCurrency: z.string().nonempty(),
+});
 
 export const parseNumber = (value: string | number | undefined) => {
   try {
-    return z.coerce.number().parse(value)
+    return z.coerce.number().parse(value);
   } catch (_) {
-    return null
+    return null;
   }
-}
+};
 
 // zod with .coerce can work with strings, but TS complains.
-export const emptyNumeric = "" as unknown as number
+export const emptyNumeric = "" as unknown as number;
 
-export type FormSchema = z.infer<typeof formSchema>
-export type Milestone = FormSchema["milestones"][number]
+export type FormSchema = z.infer<typeof formSchema>;
+export type Milestone = FormSchema["milestones"][number];
 
-export type RfpFormContext = unknown
-export type RfpControlType = Control<FormSchema, RfpFormContext, FormSchema>
-
+export type RfpFormContext = unknown;
+export type RfpControlType = Control<FormSchema, RfpFormContext, FormSchema>;

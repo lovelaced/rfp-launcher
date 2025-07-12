@@ -84,8 +84,7 @@ function App() {
       <AppHeader />
       <main className="poster-container">{pageContent}</main>
     </div>
-  )
+  );
 }
 
-export default App
-
+export default App;
