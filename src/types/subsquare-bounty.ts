@@ -76,3 +76,28 @@ export interface SubsquareBountiesResponse {
   total: number
 }
 
+// Child bounty interfaces
+export interface SubsquareChildBounty {
+  _id: string
+  parentBountyId: number
+  index: number
+  title: string
+  state: string
+  onchainData: {
+    value: string
+    curator: string
+    beneficiary: string
+    description: string
+    meta: {
+      status: Record<string, any>
+    }
+  }
+}
+
+export interface SubsquareChildBountiesResponse {
+  items: SubsquareChildBounty[]
+  page: number
+  pageSize: number
+  total: number
+}
+

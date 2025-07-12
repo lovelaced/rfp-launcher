@@ -2,13 +2,13 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import type { SubsquareBountyItem } from "@/types/subsquare-bounty"
+import type { SubsquareBountyItem, SubsquareChildBountiesResponse } from "@/types/subsquare-bounty"
 import { formatToken } from "@/lib/formatToken"
 import { PolkadotIdenticon } from "@polkadot-api/react-components"
 import { sliceMiddleAddr, getPublicKey } from "@/lib/ss58"
 import { ExternalLink } from "@/components/ExternalLink"
 import { matchedChain } from "@/chainRoute"
-import { Briefcase, UserCircle, Tag, Calendar, Layers, ChevronDown, ChevronUp, Info } from "lucide-react"
+import { Briefcase, UserCircle, Tag, Calendar, Layers, ChevronDown, ChevronUp, Info, Users, CheckCircle2 } from "lucide-react"
 import { formatDate } from "@/lib/date"
 import ReactMarkdown from "react-markdown"
 // Import customComponents from your existing MarkdownPreview
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button" // Assuming Button component is available
 
 interface BountyCardProps {
-  bounty: SubsquareBountyItem
+  bounty: SubsquareBountyItem & { childBounties?: SubsquareChildBountiesResponse }
 }
 
 export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
@@ -30,6 +30,25 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
   const bountyStatus = bounty.onchainData?.state?.state || bounty.state
   const bountyTitle = bounty.onchainData?.description || bounty.title
   const bountyContent = bounty.content || "No detailed description provided for this RFP."
+  
+  // Parse milestone count from content
+  const milestoneCount = (() => {
+    const milestoneMatches = bountyContent.match(/###\s*Milestone\s*\d+/gi)
+    return milestoneMatches ? milestoneMatches.length : 0
+  })()
+  
+  // Calculate child bounty stats
+  const childBountyStats = bounty.childBounties ? {
+    totalPayouts: bounty.childBounties.total,
+    claimedPayouts: bounty.childBounties.items.filter(child => child.state === "Claimed").length,
+    totalPaidOut: bounty.childBounties.items
+      .filter(child => child.state === "Claimed")
+      .reduce((sum, child) => sum + (child.onchainData?.value ? BigInt(child.onchainData.value) : BigInt(0)), BigInt(0)),
+    hasActivity: bounty.childBounties.total > 0,
+    milestonePayouts: bounty.childBounties.items.filter(child => 
+      child.title.toLowerCase().includes('milestone') && child.state === "Claimed"
+    ).length
+  } : null
 
   const MAX_COLLAPSED_HEIGHT_PX = 120 // Approx 5 lines of text
 
@@ -76,7 +95,46 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
         {/* Metadata Sidebar */}
         <div className="space-y-3 md:border-r md:border-pine-shadow-10 md:pr-6">
           <MetadataItem icon={Layers} label="Value" value={formatToken(bountyValue)} />
-          <MetadataItem icon={Tag} label="Status" value={bountyStatus} />
+          <MetadataItem 
+            icon={Tag} 
+            label="Status" 
+            value={
+              childBountyStats && childBountyStats.hasActivity ? (
+                <span className="text-lilypad font-medium">Team selected, In progress</span>
+              ) : (
+                bountyStatus
+              )
+            } 
+          />
+          {childBountyStats && childBountyStats.hasActivity && (
+            <>
+              {milestoneCount > 0 && (
+                <MetadataItem
+                  icon={CheckCircle2}
+                  label="Milestones"
+                  value={childBountyStats.milestonePayouts > 0 
+                    ? `${childBountyStats.milestonePayouts} of ${milestoneCount} paid`
+                    : `0 of ${milestoneCount} paid`
+                  }
+                  small
+                />
+              )}
+              <MetadataItem
+                icon={Users}
+                label="Payouts"
+                value={`${childBountyStats.totalPayouts} total (${childBountyStats.claimedPayouts} claimed)`}
+                small
+              />
+              {childBountyStats.totalPaidOut > 0 && (
+                <MetadataItem
+                  icon={CheckCircle2}
+                  label="Total paid"
+                  value={formatToken(childBountyStats.totalPaidOut)}
+                  small
+                />
+              )}
+            </>
+          )}
           <MetadataItem
             icon={UserCircle}
             label="Proposer"

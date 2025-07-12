@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useEffect, useState, useMemo } from "react"
-import type { SubsquareBountyItem, SubsquareBountiesResponse } from "@/types/subsquare-bounty"
+import type { SubsquareBountyItem, SubsquareBountiesResponse, SubsquareChildBountiesResponse } from "@/types/subsquare-bounty"
 import { BountyCard } from "@/components/job-board/BountyCard"
 import { Spinner } from "@/components/Spinner"
 import { AlertTriangle, Search } from "lucide-react"
@@ -16,14 +16,20 @@ const API_URLS = {
 
 type SortKey = "date" | "amount" | "title"
 type SortOrder = "asc" | "desc"
+type StatusFilter = "all" | "open" | "in-progress"
+
+interface BountyWithChildren extends SubsquareBountyItem {
+  childBounties?: SubsquareChildBountiesResponse
+}
 
 export const JobBoardPage: React.FC = () => {
-  const [bounties, setBounties] = useState<SubsquareBountyItem[]>([])
+  const [bounties, setBounties] = useState<BountyWithChildren[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [sortKey, setSortKey] = useState<SortKey>("date")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
 
   useEffect(() => {
     const fetchBounties = async () => {
@@ -42,7 +48,27 @@ export const JobBoardPage: React.FC = () => {
               (bounty.title && bounty.title.toUpperCase().includes("RFP"))) &&
             ["Proposed", "Approved", "Funded", "Active", "PendingPayout"].includes(bounty.onchainData.state.state),
         )
-        setBounties(rfpBounties)
+        
+        // Fetch child bounties for each RFP bounty
+        const bountiesWithChildren = await Promise.all(
+          rfpBounties.map(async (bounty) => {
+            try {
+              const childResponse = await fetch(
+                `https://${matchedChain}-api.subsquare.io/treasury/bounties/${bounty.bountyIndex}/child-bounties?page=1&pageSize=100`
+              )
+              if (childResponse.ok) {
+                const childData: SubsquareChildBountiesResponse = await childResponse.json()
+                return { ...bounty, childBounties: childData }
+              }
+            } catch (error) {
+              console.error(`Failed to fetch child bounties for bounty ${bounty.bountyIndex}:`, error)
+            }
+            // Return bounty with empty child bounties if fetch failed
+            return { ...bounty, childBounties: { items: [], page: 1, pageSize: 100, total: 0 } }
+          })
+        )
+        
+        setBounties(bountiesWithChildren)
       } catch (err) {
         setError(err instanceof Error ? err.message : "An unknown error occurred.")
         console.error(err)
@@ -55,12 +81,29 @@ export const JobBoardPage: React.FC = () => {
 
   const filteredAndSortedBounties = useMemo(() => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase()
-    const filtered = bounties.filter(
+    let filtered = bounties.filter(
       (bounty) =>
         (bounty.onchainData?.description?.toLowerCase() || "").includes(lowerCaseSearchTerm) ||
         (bounty.title?.toLowerCase() || "").includes(lowerCaseSearchTerm) ||
         (bounty.onchainData?.meta?.proposer?.toLowerCase() || "").includes(lowerCaseSearchTerm),
     )
+    
+    // Apply status filter
+    if (statusFilter === "open") {
+      filtered = filtered.filter(bounty => !bounty.childBounties || bounty.childBounties.total === 0)
+    } else if (statusFilter === "in-progress") {
+      filtered = filtered.filter(bounty => bounty.childBounties && bounty.childBounties.total > 0)
+    }
+    
+    // Debug logging
+    console.log(`Status filter: ${statusFilter}, Total bounties: ${bounties.length}, Filtered: ${filtered.length}`)
+    if (statusFilter !== "all") {
+      console.log("Child bounty counts:", bounties.map(b => ({ 
+        index: b.bountyIndex, 
+        title: b.onchainData?.description || b.title,
+        childCount: b.childBounties?.total || 0 
+      })))
+    }
 
     // Sorting logic
     filtered.sort((a, b) => {
@@ -97,7 +140,7 @@ export const JobBoardPage: React.FC = () => {
     })
 
     return filtered
-  }, [searchTerm, bounties, sortKey, sortOrder])
+  }, [searchTerm, bounties, sortKey, sortOrder, statusFilter])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
@@ -111,21 +154,32 @@ export const JobBoardPage: React.FC = () => {
 
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="relative">
-          <Input
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-pine-shadow-60 pointer-events-none z-10" />
+          <input
             type="text"
             placeholder="Search by title, proposer, or keywords..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="poster-input pl-10 text-sm w-full"
+            className="poster-input text-sm w-full"
+            style={{ paddingLeft: "2.5rem" }}
           />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-pine-shadow-60" />
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-          <span className="text-sm font-medium text-pine-shadow shrink-0">Sort by:</span>
+        <div className="flex items-center gap-3 overflow-x-auto">
+          <span className="text-sm font-medium text-pine-shadow shrink-0">Filter & Sort:</span>
+          <Select onValueChange={(value) => setStatusFilter(value as StatusFilter)} value={statusFilter}>
+            <SelectTrigger className="w-[140px] poster-input text-sm">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All RFPs</SelectItem>
+              <SelectItem value="open">Open (No team)</SelectItem>
+              <SelectItem value="in-progress">In Progress</SelectItem>
+            </SelectContent>
+          </Select>
           <Select onValueChange={(value) => setSortKey(value as SortKey)} value={sortKey}>
-            <SelectTrigger className="w-full sm:w-[180px] poster-input text-sm">
-              <SelectValue placeholder="Select criteria" />
+            <SelectTrigger className="w-[140px] poster-input text-sm">
+              <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="date">Last Activity</SelectItem>
@@ -134,8 +188,8 @@ export const JobBoardPage: React.FC = () => {
             </SelectContent>
           </Select>
           <Select onValueChange={(value) => setSortOrder(value as SortOrder)} value={sortOrder}>
-            <SelectTrigger className="w-full sm:w-[180px] poster-input text-sm">
-              <SelectValue placeholder="Select order" />
+            <SelectTrigger className="w-[140px] poster-input text-sm">
+              <SelectValue placeholder="Order" />
             </SelectTrigger>
             <SelectContent>
               {sortKey === "date" && (
@@ -207,7 +261,7 @@ export const JobBoardPage: React.FC = () => {
   )
 }
 
-const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = ({ className, ...props }) => {
+const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = ({ className = "", ...props }) => {
   return <input className={`poster-input ${className}`} {...props} />
 }
 
