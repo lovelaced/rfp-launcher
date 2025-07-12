@@ -8,15 +8,15 @@ import { selectedAccount$ } from "../SelectAccount"
 import { PickExtension } from "../SelectAccount/PickExtension"
 import { PickExtensionAccount } from "../SelectAccount/PickExtensionAccount"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
-import { dismiss, dismiss$, formDataChange$, submittedFormData$ } from "./modalActions"
+import { dismiss, dismiss$, formDataChange$, submittedFormData$ } from "./tipModalActions"
 import { StepBroadcastingTx } from "./StepBroadcastingTx"
 import { StepFinish } from "./StepFinish"
 import { StepSubmitTx } from "./StepSubmitTx"
-import { activeTxStep$, referendumIndex$ } from "./submit.state"
+import { activeTipTxStep$, tipReferendumIndex$ } from "./submit.state"
 import { submitdecisionDeposit } from "./tx/decisionDeposit"
-import { submitReferendumCreation } from "./tx/referendumCreation"
-import { signerBalance$ } from "@/components/RfpForm/data"
-import { estimatedCost$ } from "@/components/RfpForm/data"
+import { submitTipReferendumCreation } from "./tx/tipReferendumCreation"
+import { signerBalance$ } from "@/components/TipForm/data"
+import { estimatedCost$ } from "@/components/TipForm/data"
 import { formatToken } from "@/lib/formatToken"
 import { AlertCircle } from "lucide-react"
 import { Button } from "../ui/button"
@@ -152,7 +152,7 @@ const StepInsufficientBalance: FC<{ required: bigint; available: bigint; onDismi
   )
 }
 
-export const SubmitModal = () => {
+export const SubmitTipModal = () => {
   const modalStatus = useStateObservable(submitModal$)
 
   useEffect(() => {
@@ -243,8 +243,8 @@ export const SubmitModal = () => {
 }
 
 const SubmitModalContent = () => {
-  const activeTxStep = useStateObservable(activeTxStep$)
-  const refIdx = useStateObservable(referendumIndex$)
+  const activeTxStep = useStateObservable(activeTipTxStep$)
+  const refIdx = useStateObservable(tipReferendumIndex$)
 
   // Debugging output
   console.log("[SubmitModalContent] activeTxStep:", activeTxStep)
@@ -261,7 +261,7 @@ const SubmitModalContent = () => {
         return (
           <div className="space-y-2 overflow-hidden">
             <h3 className="text-sm font-bold">1. Submit the transaction to create the referendum</h3>
-            <StepSubmitTx explanation={activeTxStep.value.explanation} submit={submitReferendumCreation} />
+            <StepSubmitTx explanation={activeTxStep.value.explanation} submit={submitTipReferendumCreation} />
           </div>
         )
       case "decision":

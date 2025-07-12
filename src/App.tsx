@@ -3,6 +3,7 @@
 import { Header } from "./components/Header"
 import { RfpForm } from "./components/RfpForm"
 import { JobBoardPage } from "./pages/JobBoardPage" // Import the new Job Board page
+import { TipPage } from "./pages/TipPage"
 import { useState, useEffect } from "react"
 
 function App() {
@@ -34,16 +35,26 @@ function App() {
             }}
             className="flex flex-row items-center gap-3 hover:no-underline after:hidden"
           >
-            <img src="/logo.svg" alt="RFP Launcher Logo" className="h-10 w-auto" />
+            <img src="/logo.svg" alt="OpenGov Fund Logo" className="h-10 w-auto" />
             <div className="poster-brand">
-              <h1 className="poster-brand-title">RFP Launcher</h1>
-              <div className="poster-brand-subtitle">Kusama Proposal Toolkit</div>
+              <h1 className="poster-brand-title">opengov.fund</h1>
+              <div className="poster-brand-subtitle">Proposal & Tip Toolkit</div>
             </div>
           </a>
         </div>
 
         <div className="poster-actions">
           <nav className="flex items-center gap-4">
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault()
+                navigate("/")
+              }}
+              className={`text-sm font-medium hover:text-tomato-stamp transition-colors ${currentPage === "/" ? "text-tomato-stamp" : "text-pine-shadow"}`}
+            >
+              Job Board
+            </a>
             <a
               href="/create-rfp"
               onClick={(e) => {
@@ -55,14 +66,14 @@ function App() {
               Create RFP
             </a>
             <a
-              href="/"
+              href="/create-tip"
               onClick={(e) => {
                 e.preventDefault()
-                navigate("/")
+                navigate("/create-tip")
               }}
-              className={`text-sm font-medium hover:text-tomato-stamp transition-colors ${currentPage === "/" ? "text-tomato-stamp" : "text-pine-shadow"}`}
+              className={`text-sm font-medium hover:text-tomato-stamp transition-colors ${currentPage === "/create-tip" ? "text-tomato-stamp" : "text-pine-shadow"}`}
             >
-              Job Board
+              Create Tip
             </a>
           </nav>
           <div className="h-6 w-px bg-pine-shadow-20 mx-2"></div> {/* Visual separator */}
@@ -75,6 +86,8 @@ function App() {
   let pageContent
   if (currentPage === "/create-rfp") {
     pageContent = <RfpForm />
+  } else if (currentPage === "/create-tip") {
+    pageContent = <TipPage />
   } else {
     pageContent = <JobBoardPage />
   }

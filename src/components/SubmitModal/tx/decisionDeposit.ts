@@ -1,27 +1,36 @@
 import { typedApi } from "@/chain";
 import { state } from "@react-rxjs/core";
-import { map, merge, of, switchMap } from "rxjs";
+import { map, of, switchMap, filter } from "rxjs";
 import { dismissable } from "../modalActions";
-import { rfpReferendum$ } from "./referendumCreation";
-import { treasurySpendRfpReferendum$ } from "./treasurySpend";
+import { referendumIndex$ } from "./referendumCreation";
 import { createTxProcess } from "./txProcess";
 import { TxWithExplanation } from "./types";
 
 export const decisionDepositTx$ = state(
-  merge(rfpReferendum$, treasurySpendRfpReferendum$).pipe(
-    switchMap(({ index }) => {
+  referendumIndex$.pipe(
+    filter((index) => index != null),
+    switchMap((index) => {
+      console.log("[decisionDeposit] Building tx for index:", index);
       const res: TxWithExplanation = {
-        tx: typedApi.tx.Referenda.place_decision_deposit({ index }),
+        tx: typedApi.tx.Referenda.place_decision_deposit({ index: Number(index) }),
         explanation: {
           text: "Place decision deposit",
         },
       };
       return of(res).pipe(dismissable());
-    }),
+    })
   ),
-  null,
+  null
 );
 
 export const [decisionDepositProcess$, submitdecisionDeposit] = createTxProcess(
-  decisionDepositTx$.pipe(map((v) => v?.tx ?? null)),
+  decisionDepositTx$.pipe(map((v) => v?.tx ?? null))
 );
+
+// Auto-trigger decision deposit after referendum creation is finalized
+referendumIndex$.subscribe((index) => {
+  if (index != null) {
+    console.log("[decisionDeposit] Auto-triggering decision deposit for index:", index);
+    submitdecisionDeposit();
+  }
+});

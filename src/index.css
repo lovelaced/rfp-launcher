@@ -276,6 +276,25 @@
     display: none;
   }
 
+  /* Polkadot Network Badge - Poster Stamp Style */
+  .polkadot-stamp,
+  .polkadot-stamp:hover {
+    background-color: #E6007A; /* Polkadot pink */
+    color: white;
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px rgba(230, 0, 122, 0.3);
+    transform: rotate(-1deg);
+    font-family: var(--font-display);
+  }
+  .polkadot-stamp svg {
+    display: none;
+  }
+
   /* Cards - Cream with Subtle Shadows */
   .poster-card {
     background-color: var(--canvas-cream);

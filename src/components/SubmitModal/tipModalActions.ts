@@ -9,7 +9,7 @@ import {
   Observable,
   takeUntil,
 } from "rxjs";
-import { FormSchema } from "../RfpForm/formSchema";
+import { FormSchema } from "../TipForm/formSchema";
 
 export const [dismiss$, dismiss] = createSignal<void>();
 export const [formDataChange$, submit] = createSignal<FormSchema>();

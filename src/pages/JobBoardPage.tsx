@@ -7,8 +7,12 @@ import { BountyCard } from "@/components/job-board/BountyCard"
 import { Spinner } from "@/components/Spinner"
 import { AlertTriangle, Search } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { matchedChain } from "@/chainRoute"
 
-const API_URL = "https://kusama-api.subsquare.io/treasury/bounties?page=1&pageSize=100"
+const API_URLS = {
+  kusama: "https://kusama-api.subsquare.io/treasury/bounties?page=1&pageSize=100",
+  polkadot: "https://polkadot-api.subsquare.io/treasury/bounties?page=1&pageSize=100"
+}
 
 type SortKey = "date" | "amount" | "title"
 type SortOrder = "asc" | "desc"
@@ -26,7 +30,7 @@ export const JobBoardPage: React.FC = () => {
       setIsLoading(true)
       setError(null)
       try {
-        const response = await fetch(API_URL)
+        const response = await fetch(API_URLS[matchedChain])
         if (!response.ok) {
           throw new Error(`Failed to fetch bounties: ${response.statusText}`)
         }
@@ -47,7 +51,7 @@ export const JobBoardPage: React.FC = () => {
       }
     }
     fetchBounties()
-  }, [])
+  }, [matchedChain])
 
   const filteredAndSortedBounties = useMemo(() => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase()
@@ -98,9 +102,9 @@ export const JobBoardPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       <div className="text-center">
-        <h1 className="text-4xl font-medium text-midnight-koi mb-3">Kusama RFP Job Board</h1>
+        <h1 className="text-4xl font-medium text-midnight-koi mb-3">{matchedChain === "kusama" ? "Kusama" : "Polkadot"} RFP Job Board</h1>
         <p className="text-lg text-pine-shadow max-w-2xl mx-auto">
-          Discover active Request for Proposals (RFPs) on the Kusama Treasury. Find opportunities to contribute and get
+          Discover active Request for Proposals (RFPs) on the {matchedChain === "kusama" ? "Kusama" : "Polkadot"} Treasury. Find opportunities to contribute and get
           funded.
         </p>
       </div>
@@ -125,7 +129,7 @@ export const JobBoardPage: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="date">Last Activity</SelectItem>
-              <SelectItem value="amount">KSM Amount</SelectItem>
+              <SelectItem value="amount">{matchedChain === "kusama" ? "KSM" : "DOT"} Amount</SelectItem>
               <SelectItem value="title">Title</SelectItem>
             </SelectContent>
           </Select>
@@ -160,7 +164,7 @@ export const JobBoardPage: React.FC = () => {
       {isLoading && (
         <div className="flex flex-col items-center justify-center text-pine-shadow py-10">
           <Spinner className="h-12 w-12 mb-4" />
-          <p className="text-lg">Loading Kusama RFPs...</p>
+          <p className="text-lg">Loading {matchedChain === "kusama" ? "Kusama" : "Polkadot"} RFPs...</p>
         </div>
       )}
 

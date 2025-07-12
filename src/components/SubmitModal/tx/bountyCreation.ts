@@ -158,7 +158,7 @@ export const [bountyCreationProcess$, submitBountyCreation] = createTxProcess(
   bountyCreationTx$.pipe(map((v) => v?.tx ?? null)),
 );
 
-const getMultisigAddress = (formData: FormSchema) =>
+export const getMultisigAddress = (formData: FormSchema) =>
   accId.dec(
     getMultisigAccountId({
       threshold: Math.min(

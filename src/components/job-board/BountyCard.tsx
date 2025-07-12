@@ -5,8 +5,9 @@ import { useState, useRef, useEffect } from "react"
 import type { SubsquareBountyItem } from "@/types/subsquare-bounty"
 import { formatToken } from "@/lib/formatToken"
 import { PolkadotIdenticon } from "@polkadot-api/react-components"
-import { sliceMiddleAddr } from "@/lib/ss58"
+import { sliceMiddleAddr, getPublicKey } from "@/lib/ss58"
 import { ExternalLink } from "@/components/ExternalLink"
+import { matchedChain } from "@/chainRoute"
 import { Briefcase, UserCircle, Tag, Calendar, Layers, ChevronDown, ChevronUp, Info } from "lucide-react"
 import { formatDate } from "@/lib/date"
 import ReactMarkdown from "react-markdown"
@@ -24,7 +25,7 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
   const [isOverflowing, setIsOverflowing] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
 
-  const bountyValueKSM = bounty.onchainData?.value ? BigInt(bounty.onchainData.value) : BigInt(0)
+  const bountyValue = bounty.onchainData?.value ? BigInt(bounty.onchainData.value) : BigInt(0)
   const proposerAddress = bounty.onchainData?.meta?.proposer || bounty.proposer
   const bountyStatus = bounty.onchainData?.state?.state || bounty.state
   const bountyTitle = bounty.onchainData?.description || bounty.title
@@ -74,7 +75,7 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
       <div className="grid md:grid-cols-[minmax(200px,_1fr)_2fr] gap-x-6 gap-y-4 flex-grow">
         {/* Metadata Sidebar */}
         <div className="space-y-3 md:border-r md:border-pine-shadow-10 md:pr-6">
-          <MetadataItem icon={Layers} label="Value" value={formatToken(bountyValueKSM)} />
+          <MetadataItem icon={Layers} label="Value" value={formatToken(bountyValue)} />
           <MetadataItem icon={Tag} label="Status" value={bountyStatus} />
           <MetadataItem
             icon={UserCircle}
@@ -82,7 +83,7 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
             value={
               proposerAddress ? (
                 <div className="flex items-center gap-1">
-                  <PolkadotIdenticon address={proposerAddress} size={16} />
+                  <PolkadotIdenticon publicKey={getPublicKey(proposerAddress)} size={16} />
                   <span className="font-mono text-xs text-midnight-koi">{sliceMiddleAddr(proposerAddress)}</span>
                 </div>
               ) : (
@@ -98,7 +99,7 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
             small
           />
           <div className="pt-3 mt-3 border-t border-pine-shadow-10">
-            <ExternalLink href={`https://kusama.subsquare.io/treasury/bounties/${bounty.bountyIndex}`}>
+            <ExternalLink href={`https://${matchedChain}.subsquare.io/treasury/bounties/${bounty.bountyIndex}`}>
               <Button variant="outline" className="w-full poster-btn btn-secondary text-xs py-2">
                 <Info size={14} className="mr-2" /> View on Subsquare
               </Button>

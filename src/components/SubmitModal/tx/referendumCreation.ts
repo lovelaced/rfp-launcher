@@ -246,3 +246,8 @@ export const rfpReferendum$ = state(
     ),
   ),
 );
+
+export const referendumIndex$ = state(
+  rfpReferendum$.pipe(map((ref) => ref?.index ?? null)),
+  null
+);
