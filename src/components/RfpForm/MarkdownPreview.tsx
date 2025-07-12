@@ -17,7 +17,7 @@ const baseTextStyles =
 const headingStyles = `${baseTextStyles} text-midnight-koi font-semibold mt-6 mb-3`
 const codeStyles = "font-mono bg-pine-shadow-10 text-midnight-koi px-1 py-0.5 rounded text-sm"
 
-const customComponents: Components = {
+export const customComponents: Components = {
   h1: ({ node, ...props }) => (
     <h1 className={cn(headingStyles, "text-3xl border-b border-pine-shadow-20 pb-2 mb-4")} {...props} />
   ),
