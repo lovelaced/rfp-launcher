@@ -1,4 +1,4 @@
-import { dot, ksm, polkadot_people } from "@polkadot-api/descriptors";
+import { dot, ksm, polkadot_people, ksmcc3_people } from "@polkadot-api/descriptors";
 import {
   createReferendaSdk,
   kusamaSpenderOrigin,
@@ -24,7 +24,8 @@ export const smoldot = startFromWorker(new SmWorker(), {
 
 const kusamaChainSpec = import("polkadot-api/chains/ksmcc3");
 const polkadotChainSpec = import("polkadot-api/chains/polkadot");
-const peopleChainSpec = import("polkadot-api/chains/polkadot_people");
+const polkadotPeopleChainSpec = import("polkadot-api/chains/polkadot_people");
+const kusamaPeopleChainSpec = import("polkadot-api/chains/ksmcc3_people");
 
 const getMainChainProvider = () => {
   if (matchedChain === "polkadot") {
@@ -51,13 +52,31 @@ const getMainChainProvider = () => {
 const polkadotChain = polkadotChainSpec.then(({ chainSpec }) =>
   smoldot.addChain({ chainSpec }),
 );
-const peopleChain = Promise.all([polkadotChain, peopleChainSpec]).then(
+const kusamaChain = kusamaChainSpec.then(({ chainSpec }) =>
+  smoldot.addChain({ chainSpec }),
+);
+
+const polkadotPeopleChain = Promise.all([polkadotChain, polkadotPeopleChainSpec]).then(
   ([relayChain, { chainSpec }]) =>
     smoldot.addChain({ chainSpec, potentialRelayChains: [relayChain] }),
 );
 
-export const peopleClient = createClient(getSmProvider(peopleChain));
-export const peopleApi = peopleClient.getTypedApi(polkadot_people);
+const kusamaPeopleChain = Promise.all([kusamaChain, kusamaPeopleChainSpec]).then(
+  ([relayChain, { chainSpec }]) =>
+    smoldot.addChain({ chainSpec, potentialRelayChains: [relayChain] }),
+);
+
+// Create both people clients
+export const polkadotPeopleClient = createClient(getSmProvider(polkadotPeopleChain));
+export const kusamaPeopleClient = createClient(getSmProvider(kusamaPeopleChain));
+
+export const polkadotPeopleApi = polkadotPeopleClient.getTypedApi(polkadot_people);
+export const kusamaPeopleApi = kusamaPeopleClient.getTypedApi(ksmcc3_people);
+
+// Keep the original export for backward compatibility
+export const peopleApi = matchedChain === "kusama" 
+  ? kusamaPeopleApi
+  : polkadotPeopleApi;
 
 export const client = createClient(
   USE_CHOPSTICKS

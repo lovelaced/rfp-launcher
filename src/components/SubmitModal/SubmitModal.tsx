@@ -118,28 +118,32 @@ const StepInsufficientBalance: FC<{ required: bigint; available: bigint; onDismi
     // This content will be rendered inside a Dialog open={true}
     <>
       <DialogHeader>
-        <DialogTitle className="flex items-center gap-2 text-destructive">
+        <DialogTitle className="flex items-center gap-2 text-tomato-stamp">
           <AlertCircle className="h-5 w-5" /> Insufficient Balance
         </DialogTitle>
-        <DialogDescription>
-          Your connected wallet does not have enough funds to cover the estimated costs for submitting this tip referendum.
+        <DialogDescription className="text-pine-shadow-60">
+          Your connected wallet does not have enough funds to cover the estimated costs for submitting this referendum.
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-4 py-4">
-        <div className="p-4 border rounded-md bg-destructive/10 border-destructive/30 text-sm">
-          <p className="text-destructive">
-            Required: <strong className="font-semibold">{formatToken(required)}</strong>
-          </p>
-          <p className="text-destructive">
-            Available: <strong className="font-semibold">{formatToken(available)}</strong>
-          </p>
+        <div className="poster-alert alert-error">
+          <div className="space-y-2">
+            <p>
+              <span className="text-pine-shadow-60">Required:</span>{" "}
+              <strong className="text-midnight-koi font-medium">{formatToken(required)}</strong>
+            </p>
+            <p>
+              <span className="text-pine-shadow-60">Available:</span>{" "}
+              <strong className="text-midnight-koi font-medium">{formatToken(available)}</strong>
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-pine-shadow-60">
           Please add funds to your wallet or select a different wallet with sufficient balance.
         </p>
       </div>
       <div className="flex justify-end gap-2 pt-2">
-        <Button variant="outline" onClick={onDismiss}>
+        <Button className="poster-btn btn-secondary" onClick={onDismiss}>
           Close
         </Button>
         {/* Optional: Button to re-trigger wallet selection.
@@ -177,8 +181,8 @@ export const SubmitModal = () => {
       <Dialog {...dialogProps}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Connect Wallet</DialogTitle>
-            <DialogDescription>Please connect a wallet to submit the tip referendum.</DialogDescription>
+            <DialogTitle className="text-midnight-koi">Connect Wallet</DialogTitle>
+            <DialogDescription className="text-pine-shadow-60">Please connect a wallet to submit the referendum.</DialogDescription>
           </DialogHeader>
           <PickExtension />
           <PickExtensionAccount
@@ -197,11 +201,11 @@ export const SubmitModal = () => {
       <Dialog {...dialogProps}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Verifying Funds</DialogTitle>
+            <DialogTitle className="text-midnight-koi">Verifying Funds</DialogTitle>
           </DialogHeader>
-          <div className="py-8 flex flex-col justify-center items-center space-y-2">
+          <div className="py-8 flex flex-col justify-center items-center space-y-4">
             <Loading />
-            <p className="text-sm text-muted-foreground">Checking your available balance...</p>
+            <p className="text-sm text-pine-shadow-60">Checking your available balance...</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -227,8 +231,8 @@ export const SubmitModal = () => {
       <Dialog {...dialogProps}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Submit Tip Referendum</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-midnight-koi">Submit Referendum</DialogTitle>
+            <DialogDescription className="text-pine-shadow-60">
               This is a two-step process: Submit the referendum and place the decision deposit.
             </DialogDescription>
           </DialogHeader>
@@ -260,14 +264,14 @@ const SubmitModalContent = () => {
       case "ref":
         return (
           <div className="space-y-2 overflow-hidden">
-            <h3 className="text-sm font-bold">1. Submit the transaction to create the referendum</h3>
+            <h3 className="text-sm font-medium text-midnight-koi">1. Submit the transaction to create the referendum</h3>
             <StepSubmitTx explanation={activeTxStep.value.explanation} submit={submitReferendumCreation} />
           </div>
         )
       case "decision":
         return (
           <div className="space-y-2 overflow-hidden">
-            <h3 className="text-sm font-bold">2. Place the decision deposit on the referendum to start it</h3>
+            <h3 className="text-sm font-medium text-midnight-koi">2. Place the decision deposit on the referendum to start it</h3>
             <StepSubmitTx explanation={activeTxStep.value.explanation} submit={submitdecisionDeposit} />
           </div>
         )

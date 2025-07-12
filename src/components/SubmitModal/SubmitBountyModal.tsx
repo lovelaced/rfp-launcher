@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { dismiss } from "./modalActions";
+import { dismiss, submittedFormData$ } from "./modalActions";
 import { StepBroadcastingTx } from "./StepBroadcastingTx";
 import { StepFinish } from "./StepFinish";
 import { StepSubmitTx } from "./StepSubmitTx";
@@ -15,20 +15,26 @@ import { submitBountyCreation } from "./tx/bountyCreation";
 import { submitdecisionDeposit } from "./tx/decisionDeposit";
 import { submitReferendumCreation } from "./tx/referendumCreation";
 
-export const SubmitBountyModal = () => (
-  <Dialog onOpenChange={(isOpen) => (isOpen ? null : dismiss())} open>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Submit RFP</DialogTitle>
-        <DialogDescription>
-          This is a three-step process: Create the bounty, submit the
-          referendum, and place the decision deposit.
-        </DialogDescription>
-      </DialogHeader>
-      <SubmitModalContent /> {/* This contains the multi-step tx UI */}
-    </DialogContent>
-  </Dialog>
-);
+export const SubmitBountyModal = () => {
+  const formData = useStateObservable(submittedFormData$);
+  
+  if (!formData) return null;
+  
+  return (
+    <Dialog onOpenChange={(isOpen) => (isOpen ? null : dismiss())} open>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-midnight-koi">Submit RFP</DialogTitle>
+          <DialogDescription className="text-pine-shadow-60">
+            This is a three-step process: Create the bounty, submit the
+            referendum, and place the decision deposit.
+          </DialogDescription>
+        </DialogHeader>
+        <SubmitModalContent /> {/* This contains the multi-step tx UI */}
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const SubmitModalContent = () => {
   const activeTxStep = useStateObservable(activeBountyRfpTxStep$);
@@ -41,7 +47,7 @@ const SubmitModalContent = () => {
       case "bounty":
         return (
           <div className="space-y-2 overflow-hidden">
-            <h3 className="text-sm font-bold">
+            <h3 className="text-sm font-medium text-midnight-koi">
               1. Submit the transaction to create the bounty
             </h3>
             <StepSubmitTx
@@ -53,7 +59,7 @@ const SubmitModalContent = () => {
       case "ref":
         return (
           <div className="space-y-2 overflow-hidden">
-            <h3 className="text-sm font-bold">
+            <h3 className="text-sm font-medium text-midnight-koi">
               2. Submit the transaction to create the referendum
             </h3>
             <StepSubmitTx
@@ -65,7 +71,7 @@ const SubmitModalContent = () => {
       case "decision":
         return (
           <div className="space-y-2 overflow-hidden">
-            <h3 className="text-sm font-bold">
+            <h3 className="text-sm font-medium text-midnight-koi">
               3. Place the decision deposit on the referendum to start it
             </h3>
             <StepSubmitTx

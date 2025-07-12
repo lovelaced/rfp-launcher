@@ -11,9 +11,9 @@ export const Spinner = (props: LucideProps) => (
 
 export const Loading: FC<PropsWithChildren> = ({ children }) => (
   <div
-    className={"flex items-center justify-center gap-2 text-muted-foreground"}
+    className={"flex items-center justify-center gap-2 text-pine-shadow-60"}
   >
-    <Spinner />
-    {children}
+    <Spinner className="text-lake-haze" />
+    {children && <span className="text-sm">{children}</span>}
   </div>
 );

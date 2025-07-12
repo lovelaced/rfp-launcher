@@ -9,7 +9,7 @@ import { addWeeks, differenceInDays } from "date-fns";
 import { ArrowLeft, ArrowRight, Rocket } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { SubmitModal } from "../SubmitModal";
+import { SubmitBountyModal } from "../SubmitModal/SubmitBountyModal";
 import { submit } from "../SubmitModal/modalActions";
 import { Form } from "../ui/form";
 import { estimatedCost$, estimatedTimeline$, signerBalance$ } from "./data";
@@ -263,7 +263,7 @@ export const RfpForm = () => {
           </div>
         </form>
       </Form>
-      <SubmitModal />
+      <SubmitBountyModal />
     </FormProvider>
   );
 };
