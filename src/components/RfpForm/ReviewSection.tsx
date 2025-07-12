@@ -3,7 +3,8 @@
 import { TOKEN_SYMBOL } from "@/constants";
 import { formatDate } from "@/lib/date";
 import { formatCurrency, formatToken, formatUsd } from "@/lib/formatToken";
-import { getPublicKey, sliceMiddleAddr } from "@/lib/ss58";
+import { sliceMiddleAddr } from "@/lib/ss58";
+import { getSs58AddressInfo } from "polkadot-api";
 import { currencyRate$ } from "@/services/currencyRate";
 import { PolkadotIdenticon } from "@polkadot-api/react-components";
 import { useStateObservable } from "@react-rxjs/core";
@@ -455,12 +456,16 @@ const TimelineSummary: FC<{
 
 const SupervisorListItem: FC<{ address: string }> = ({ address }) => {
   const supervisorIdentity = useStateObservable(identity$(address));
+  
+  // Validate address before using it
+  const addressInfo = getSs58AddressInfo(address);
+  if (!addressInfo.isValid) return null;
 
   return (
     <li className="flex items-center gap-2 py-1">
       <PolkadotIdenticon
         size={20}
-        publicKey={getPublicKey(address)}
+        publicKey={addressInfo.publicKey}
         className="shrink-0"
       />
       <div className="text-xs leading-tight overflow-hidden">

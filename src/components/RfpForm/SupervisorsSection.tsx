@@ -1,6 +1,6 @@
 "use client";
 
-import { getPublicKey, sliceMiddleAddr } from "@/lib/ss58";
+import { sliceMiddleAddr } from "@/lib/ss58";
 import { CopyText, PolkadotIdenticon } from "@polkadot-api/react-components";
 import { useStateObservable } from "@react-rxjs/core";
 import { CheckCircle, Trash2 } from "lucide-react";
@@ -128,6 +128,10 @@ const SupervisorsControl: FC<
 
 const AddressIdentity: FC<{ addr: string }> = ({ addr }) => {
   const identity = useStateObservable(identity$(addr));
+  
+  // Validate address before using it
+  const addressInfo = getSs58AddressInfo(addr);
+  if (!addressInfo.isValid) return null;
 
   return (
     <div className="flex items-center gap-3 overflow-hidden flex-1">
@@ -137,7 +141,7 @@ const AddressIdentity: FC<{ addr: string }> = ({ addr }) => {
           <CheckCircle size={18} className="text-lilypad-dark w-8" />
         }
       >
-        <PolkadotIdenticon size={36} publicKey={getPublicKey(addr)} />
+        <PolkadotIdenticon size={36} publicKey={addressInfo.publicKey} />
       </CopyText>
       {identity ? (
         identity.verified ? (

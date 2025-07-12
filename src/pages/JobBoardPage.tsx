@@ -261,7 +261,4 @@ export const JobBoardPage: React.FC = () => {
   )
 }
 
-const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = ({ className = "", ...props }) => {
-  return <input className={`poster-input ${className}`} {...props} />
-}
 

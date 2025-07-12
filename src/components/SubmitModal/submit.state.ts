@@ -10,7 +10,6 @@ import {
 import {
   referendumCreationProcess$,
   referendumCreationTx$,
-  referendumIndex$,
 } from "./tx/referendumCreation";
 import {
   bountyCreationProcess$,
@@ -100,7 +99,7 @@ export const activeBountyRfpTxStep$ = state(
 
 export const activeChildBountyTxStep$ = state(
   combineLatest([
-    txProcessState(childBountyTx$, childBountyProcess$, "childBounty"),
+    txProcessState(childBountyTx$ as any, childBountyProcess$, "childBounty"),
     txProcessState(referendumCreationTx$, referendumCreationProcess$, "ref"),
     txProcessState(decisionDepositTx$, decisionDepositProcess$, "decision"),
   ]).pipe(map((steps) => steps.reverse().reduce((a, b) => a || b, null))),

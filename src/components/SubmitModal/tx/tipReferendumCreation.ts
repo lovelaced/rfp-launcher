@@ -11,7 +11,7 @@ import {
 } from "rxjs";
 import {
   curatorDeposit$,
-} from "../../RfpForm/data";
+} from "../../TipForm/data";
 import { dismissable, submittedFormData$ } from "../tipModalActions";
 import { createTxProcess } from "./txProcess";
 import { TxWithExplanation } from "./types";
@@ -49,7 +49,7 @@ export const tipReferendumCreationTx$ = state(
         if (formData.referralFeePercent && formData.referral) {
           referralFeeAmount = (tipAmountValue * BigInt(formData.referralFeePercent)) / 100n;
         }
-        const totalValue = tipAmountValue + referralFeeAmount;
+        // const totalValue = tipAmountValue + referralFeeAmount;
 
         // Create spend_local call for the main beneficiary
         const tipCall = typedApi.tx.Treasury.spend_local({
@@ -102,11 +102,11 @@ export const tipReferendumCreationTx$ = state(
             text: "Tip referendum proposal",
             params: {
               tipRecipient: formData.tipBeneficiary,
-              amount: formatToken(totalValue),
-              referral: formData.referral || "None",
-              referralFee: formData.referralFeePercent ? `${formData.referralFeePercent}%` : "None",
-              track: formData.tipperTrack,
-              trackId: String(trackId),
+              amount: formatToken(tipAmountValue),
+              ...(formData.referral && formData.referralFeePercent ? {
+                referral: formData.referral,
+                referralFee: `${formatToken(referralFeeAmount)} (${formData.referralFeePercent}%)`,
+              } : {}),
             },
           },
         };
@@ -142,9 +142,8 @@ export const tipReferendumCreationTx$ = state(
             explanation: {
               text: "Create tip referendum",
               params: {
-                track: formData.tipperTrack,
-                trackId: String(TIPPER_TRACK_IDS[formData.tipperTrack]),
                 call: proposal.explanation,
+                track: formData.tipperTrack,
               },
             },
           });
@@ -171,7 +170,7 @@ export const tipReferendumCreationTx$ = state(
   null
 );
 
-const formatTrackName = (track: string) => track.replace(/_/g, " ");
+// const formatTrackName = (track: string) => track.replace(/_/g, " ");
 
 export const [tipReferendumCreationProcess$, submitTipReferendumCreation] =
   createTxProcess(tipReferendumCreationTx$.pipe(map((v) => v?.tx ?? null)));

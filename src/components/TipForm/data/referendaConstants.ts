@@ -1,16 +1,10 @@
-import { typedApi } from "@/chain";
+import { typedApi, referendaSdk } from "@/chain";
 import {
-  createReferendaSdk,
-  kusamaSpenderOrigin,
   PolkadotRuntimeOriginCaller,
   ReferendaTrack,
 } from "@polkadot-api/sdk-governance";
 import { state } from "@react-rxjs/core";
 import { combineLatest, from, map } from "rxjs";
-
-export const referendaSdk = createReferendaSdk(typedApi, {
-  spenderOrigin: kusamaSpenderOrigin,
-});
 
 // Add mapping for tipper track IDs to match referendumCreation.ts
 const TIPPER_TRACK_IDS: Record<string, number> = {

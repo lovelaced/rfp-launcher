@@ -7,7 +7,8 @@ import { selectedAccount$ } from "../SelectAccount"
 import { FormInputField } from "./FormInputField"
 import { useStateObservable } from "@react-rxjs/core"
 import { PolkadotIdenticon } from "@polkadot-api/react-components"
-import { getPublicKey, sliceMiddleAddr } from "@/lib/ss58"
+import { sliceMiddleAddr } from "@/lib/ss58"
+import { getSs58AddressInfo } from "polkadot-api"
 import { CheckCircle } from "lucide-react"
 import { identity$ } from "./data"
 
@@ -44,11 +45,15 @@ export const BeneficiariesSection: FC<{ control: TipControlType }> = ({ control 
 const BeneficiaryIdentityBadge: FC<{ address: string | undefined }> = ({ address }) => {
   if (!address) return null
   
+  // Validate address before using it
+  const addressInfo = getSs58AddressInfo(address)
+  if (!addressInfo.isValid) return null
+  
   const identity = useStateObservable(identity$(address))
   
   return (
     <div className="flex items-center gap-2 mt-2 text-sm text-pine-shadow">
-      <PolkadotIdenticon size={16} publicKey={getPublicKey(address)} />
+      <PolkadotIdenticon size={16} publicKey={addressInfo.publicKey} />
       {identity ? (
         identity.verified ? (
           <div className="flex items-center gap-1">

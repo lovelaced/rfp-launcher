@@ -1,11 +1,10 @@
 import { FC } from "react";
 import { ExternalLink } from "../ExternalLink";
-import { Textarea } from "../ui/textarea";
 import { CheckCircle2 } from "lucide-react";
 import { matchedChain } from "@/chainRoute";
 
 export const StepFinish: FC<{
-  refIdx?: number;
+  refIdx?: number | null;
 }> = ({ refIdx }) => {
   return (
     <div className="space-y-4 overflow-hidden">
@@ -21,15 +20,17 @@ export const StepFinish: FC<{
       <div className="flex gap-4 justify-center">
         <ExternalLink 
           href={`https://${matchedChain}.subsquare.io/referenda/${refIdx}`}
-          className="poster-btn btn-primary text-center"
         >
-          View on Subsquare
+          <span className="poster-btn btn-primary text-center">
+            View on Subsquare
+          </span>
         </ExternalLink>
         <ExternalLink
           href={`https://${matchedChain}.polkassembly.io/referenda/${refIdx}`}
-          className="poster-btn btn-secondary text-center"
         >
-          View on Polkassembly
+          <span className="poster-btn btn-secondary text-center">
+            View on Polkassembly
+          </span>
         </ExternalLink>
       </div>
       <div className="space-y-2">

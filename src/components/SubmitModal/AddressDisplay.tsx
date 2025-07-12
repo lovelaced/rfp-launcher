@@ -1,19 +1,24 @@
 import { FC } from "react";
 import { useStateObservable } from "@react-rxjs/core";
 import { PolkadotIdenticon } from "@polkadot-api/react-components";
-import { getPublicKey, sliceMiddleAddr } from "@/lib/ss58";
+import { sliceMiddleAddr } from "@/lib/ss58";
+import { getSs58AddressInfo } from "polkadot-api";
 // Import from RfpForm identity which uses the chain-aware peopleApi
 import { identity$ } from "@/components/RfpForm/data/identity";
 import { CheckCircle2 } from "lucide-react";
 
 export const AddressDisplay: FC<{ address: string }> = ({ address }) => {
   const identity = useStateObservable(identity$(address));
+  
+  // Validate address before using it
+  const addressInfo = getSs58AddressInfo(address);
+  if (!addressInfo.isValid) return null;
 
   return (
     <div className="flex items-center gap-2">
       <PolkadotIdenticon
         size={16}
-        publicKey={getPublicKey(address)}
+        publicKey={addressInfo.publicKey}
         className="shrink-0"
       />
       <div className="text-sm overflow-hidden">

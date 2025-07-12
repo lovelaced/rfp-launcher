@@ -5,7 +5,8 @@ import { useState, useRef, useEffect } from "react"
 import type { SubsquareBountyItem, SubsquareChildBountiesResponse } from "@/types/subsquare-bounty"
 import { formatToken } from "@/lib/formatToken"
 import { PolkadotIdenticon } from "@polkadot-api/react-components"
-import { sliceMiddleAddr, getPublicKey } from "@/lib/ss58"
+import { sliceMiddleAddr } from "@/lib/ss58"
+import { getSs58AddressInfo } from "polkadot-api"
 import { ExternalLink } from "@/components/ExternalLink"
 import { matchedChain } from "@/chainRoute"
 import { Briefcase, UserCircle, Tag, Calendar, Layers, ChevronDown, ChevronUp, Info, Users, CheckCircle2 } from "lucide-react"
@@ -140,10 +141,16 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
             label="Proposer"
             value={
               proposerAddress ? (
-                <div className="flex items-center gap-1">
-                  <PolkadotIdenticon publicKey={getPublicKey(proposerAddress)} size={16} />
-                  <span className="font-mono text-xs text-midnight-koi">{sliceMiddleAddr(proposerAddress)}</span>
-                </div>
+                (() => {
+                  const addressInfo = getSs58AddressInfo(proposerAddress)
+                  if (!addressInfo.isValid) return "Invalid address"
+                  return (
+                    <div className="flex items-center gap-1">
+                      <PolkadotIdenticon publicKey={addressInfo.publicKey} size={16} />
+                      <span className="font-mono text-xs text-midnight-koi">{sliceMiddleAddr(proposerAddress)}</span>
+                    </div>
+                  )
+                })()
               ) : (
                 "N/A"
               )

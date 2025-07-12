@@ -44,7 +44,8 @@ const SubmitModalContent = () => {
   if (!activeTxStep) return null;
 
   if (activeTxStep.type === "tx") {
-    if (activeTxStep.value.type === "unknown") {
+    const txValue = activeTxStep.value as any;
+    if (txValue.type === "unknown") {
       return (
         <div>
           Unfortunately, the curator - bounty relationship is not currently
@@ -53,11 +54,11 @@ const SubmitModalContent = () => {
       );
     }
 
-    if (activeTxStep.value.type === "multisig") {
+    if (txValue.type === "multisig") {
       const subsquareUrl = `https://${matchedChain}.subsquare.io/treasury/child-bounties/${nextId}`;
-      const multisigUrl = `https://multisig.usepapi.app/?chain=sm-${matchedChain}&calldata=${activeTxStep.value.callData}&signatories=${activeTxStep.value.signatories.join(
+      const multisigUrl = `https://multisig.usepapi.app/?chain=sm-${matchedChain}&calldata=${txValue.callData}&signatories=${txValue.signatories.join(
         "_",
-      )}&threshold=${activeTxStep.value.threshold}`;
+      )}&threshold=${txValue.threshold}`;
       return (
         <div className="space-y-2 overflow-hidden">
           <h3 className="text-sm font-bold">

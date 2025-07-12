@@ -2,7 +2,8 @@
 
 import { TOKEN_SYMBOL } from "@/constants"
 import { formatCurrency, formatToken, formatUsd } from "@/lib/formatToken"
-import { getPublicKey, sliceMiddleAddr } from "@/lib/ss58"
+import { sliceMiddleAddr } from "@/lib/ss58"
+import { getSs58AddressInfo } from "polkadot-api"
 import { currencyRate$ } from "@/services/currencyRate"
 import { PolkadotIdenticon } from "@polkadot-api/react-components"
 import { useStateObservable } from "@react-rxjs/core"
@@ -267,11 +268,15 @@ const TipSummary: FC<{
 const BeneficiaryListItem: FC<{ address: string | undefined }> = ({ address }) => {
   if (!address) return null
   
+  // Validate address before using it
+  const addressInfo = getSs58AddressInfo(address)
+  if (!addressInfo.isValid) return null
+  
   const identity = useStateObservable(identity$(address))
 
   return (
     <div className="flex items-center gap-2 text-sm text-pine-shadow">
-      <PolkadotIdenticon size={16} publicKey={getPublicKey(address)} />
+      <PolkadotIdenticon size={16} publicKey={addressInfo.publicKey} />
       {identity ? (
         identity.verified ? (
           <div className="flex items-center gap-1">

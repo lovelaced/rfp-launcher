@@ -12,7 +12,7 @@ import { currencyRate$ } from "@/services/currencyRate"
 import { FormInputField } from "./FormInputField"
 import { type TipControlType, type FormSchema, parseNumber } from "./formSchema"
 import { useFormContext } from "react-hook-form"
-import { submissionDeposit, getTrack } from "./data/referendaConstants"
+import { getTrack } from "./data/referendaConstants"
 
 
 export const FundingSection: FC<{ control: TipControlType; onTooBigChange?: (isTooBig: boolean) => void }> = ({ control, onTooBigChange }) => {
