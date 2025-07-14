@@ -14,9 +14,6 @@ function generateMarkdown(
   identities: Record<string, string | undefined>,
 ) {
   // // Don't require full validation - work with partial data
-  // console.log("Generating markdown with data:", data);
-  // console.log("Total amount with buffer:", totalAmountWithBuffer);
-  // console.log("Identities:", identities);
 
   // Extract values with fallbacks
   const projectTitle = data.projectTitle || "Untitled Project";
@@ -94,7 +91,6 @@ ${description}`;
 }
 `;
 
-  // console.log("Generated markdown:", markdown);
   return markdown;
 }
 

@@ -15,8 +15,7 @@ export const useControllerAction = <T extends FormEvent | MouseEvent>(
       action(evt)
         .then((res) => res.json())
         .then(
-          (res) => {
-            console.log(res);
+          (_res) => {
             setStatus("success");
           },
           (err) => {

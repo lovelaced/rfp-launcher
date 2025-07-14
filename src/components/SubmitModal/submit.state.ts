@@ -44,7 +44,6 @@ const txProcessState = (
 ) =>
   combineLatest([tx$, process$]).pipe(
     map(([tx, process]) => {
-      console.log(`[txProcessState] tag: ${tag}, tx:`, tx, "process:", process);
       if (process) {
         if (process.type === "finalized" && process.ok) {
           const referendum = referendaSdk.getSubmittedReferendum(process);

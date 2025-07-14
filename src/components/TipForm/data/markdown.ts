@@ -11,9 +11,6 @@ export function generateMarkdown(
   identities: Record<string, string | undefined>,
 ) {
   // Don't require full validation - work with partial data
-  console.log("Generating markdown with data:", data)
-  console.log("Total amount in tokens:", totalAmountToken)
-  console.log("Identities:", identities)
 
   // Extract values with fallbacks
   const tipTitle = data.tipTitle || "Untitled Tip"
@@ -48,7 +45,6 @@ ${typeof totalAmountToken === 'number' && !isNaN(totalAmountToken)
 ${tipDescription || "Tip description to be defined..."}
 `
 
-  console.log("Generated markdown:", markdown)
   return markdown
 }
 

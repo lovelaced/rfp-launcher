@@ -181,13 +181,11 @@ export const tipReferendumIndex$ = state(
     rxFilter((evt) => {
       const isFinalized = !!evt && evt.type === "finalized" && evt.ok && Array.isArray((evt as any).events);
       if (evt) {
-        console.log("[referendumIndex$] process evt:", evt, "isFinalized:", isFinalized);
       }
       return isFinalized;
     }),
     rxMap((evt) => {
       const events = (evt as any).events;
-      console.log("[referendumIndex$] all events:", events);
       const event = events.find(
         (e: any) =>
           e.type === "Referenda" &&
@@ -196,17 +194,14 @@ export const tipReferendumIndex$ = state(
           e.value.value &&
           typeof e.value.value.index === "number"
       );
-      console.log("[referendumIndex$] found event:", event);
       const index = event ? event.value.value.index : null;
       if (!index) {
-        console.log("[referendumIndex$] index not valid:", index);
       }
       return index;
     }),
     rxFilter((index) => {
       const valid = typeof index === "number" && !isNaN(index);
       if (!valid) {
-        console.log("[referendumIndex$] index not valid:", index);
       }
       return valid;
     })

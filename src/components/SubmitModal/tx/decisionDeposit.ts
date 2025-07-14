@@ -10,7 +10,6 @@ export const decisionDepositTx$ = state(
   referendumIndex$.pipe(
     filter((index) => index != null),
     switchMap((index) => {
-      console.log("[decisionDeposit] Building tx for index:", index);
       const res: TxWithExplanation = {
         tx: typedApi.tx.Referenda.place_decision_deposit({ index: Number(index) }),
         explanation: {
@@ -30,7 +29,6 @@ export const [decisionDepositProcess$, submitdecisionDeposit] = createTxProcess(
 // Auto-trigger decision deposit after referendum creation is finalized
 referendumIndex$.subscribe((index) => {
   if (index != null) {
-    console.log("[decisionDeposit] Auto-triggering decision deposit for index:", index);
     submitdecisionDeposit();
   }
 });

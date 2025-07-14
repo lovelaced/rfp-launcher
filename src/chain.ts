@@ -16,8 +16,8 @@ import { withChopsticksEnhancer } from "./lib/chopsticksEnhancer";
 export const USE_CHOPSTICKS = import.meta.env.VITE_WITH_CHOPSTICKS;
 
 export const smoldot = startFromWorker(new SmWorker(), {
-  logCallback: (level, target, message) => {
-    console.debug("smoldot[%s(%s)] %s", target, level, message);
+  logCallback: (_level, _target, _message) => {
+    // Logging disabled for production
   },
   forbidWs: true,
 });

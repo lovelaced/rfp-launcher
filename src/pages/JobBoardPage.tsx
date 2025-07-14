@@ -205,14 +205,6 @@ export const JobBoardPage: React.FC = () => {
     }
     
     // Debug logging
-    console.log(`Status filter: ${statusFilter}, Total bounties: ${bounties.length}, Filtered: ${filtered.length}`)
-    if (statusFilter !== "all") {
-      console.log("Child bounty counts:", bounties.map(b => ({ 
-        index: b.bountyIndex, 
-        title: b.onchainData?.description || b.title,
-        childCount: b.childBounties?.total || 0 
-      })))
-    }
 
     // Sorting logic
     filtered.sort((a, b) => {

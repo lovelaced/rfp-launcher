@@ -251,10 +251,7 @@ const SubmitModalContent = () => {
   const refIdx = useStateObservable(referendumIndex$)
 
   // Debugging output
-  console.log("[SubmitModalContent] activeTxStep:", activeTxStep)
   if (activeTxStep && activeTxStep.type === "tx") {
-    console.log("[SubmitModalContent] tag:", activeTxStep.tag)
-    console.log("[SubmitModalContent] value:", activeTxStep.value)
   }
 
   if (!activeTxStep) return null

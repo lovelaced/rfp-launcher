@@ -54,12 +54,10 @@ export const TipForm = () => {
         // If the stored data has outdated fields but no current fields, clear it
         if (parsed.supervisors && !parsed.tipBeneficiary) {
           localStorage.removeItem("tip-form")
-          console.log("Cleared old form data with outdated fields")
         }
       } catch (e) {
         // If parsing fails, clear the data
         localStorage.removeItem("tip-form")
-        console.log("Cleared invalid form data")
       }
     }
   }, [])
