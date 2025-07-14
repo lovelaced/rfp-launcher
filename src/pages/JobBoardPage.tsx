@@ -351,13 +351,20 @@ export const JobBoardPage: React.FC = () => {
           ))}
         </div>
       )}
-      <div className="text-center mt-12 text-sm text-pine-shadow-60">
+      <div className="text-center mt-12 text-sm text-pine-shadow-60 space-y-2">
         <p>
           This board lists bounties from Subsquare that appear to be RFPs. To create your own RFP, use the{" "}
           <a href="/launch-rfp" className="font-medium underline hover:text-tomato-stamp">
             RFP Launcher tool
           </a>
           .
+        </p>
+        <p>
+          Have questions?{" "}
+          <a href="/faq" className="font-medium underline hover:text-tomato-stamp">
+            Check out our FAQ
+          </a>
+          {" "}for information about RFPs, tips, and bounty management.
         </p>
       </div>
     </div>

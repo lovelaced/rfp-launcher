@@ -2,8 +2,9 @@
 
 import { Header } from "./components/Header"
 import { RfpForm } from "./components/RfpForm"
-import { JobBoardPage } from "./pages/JobBoardPage" // Import the new Job Board page
+import { JobBoardPage } from "./pages/JobBoardPage"
 import { TipPage } from "./pages/TipPage"
+import { FaqPage } from "./pages/FaqPage"
 import { useState, useEffect } from "react"
 
 function App() {
@@ -75,6 +76,16 @@ function App() {
             >
               Suggest Tip
             </a>
+            <a
+              href="/faq"
+              onClick={(e) => {
+                e.preventDefault()
+                navigate("/faq")
+              }}
+              className={`text-sm font-medium hover:text-tomato-stamp transition-colors ${currentPage === "/faq" ? "text-tomato-stamp" : "text-pine-shadow"}`}
+            >
+              FAQ
+            </a>
           </nav>
           <div className="h-6 w-px bg-pine-shadow-20 mx-2"></div> {/* Visual separator */}
           <Header /> {/* This will render the original Header content (SelectAccount, Kusama Stamp, etc.) */}
@@ -88,6 +99,8 @@ function App() {
     pageContent = <RfpForm />
   } else if (currentPage === "/suggest-tip") {
     pageContent = <TipPage />
+  } else if (currentPage === "/faq") {
+    pageContent = <FaqPage />
   } else {
     pageContent = <JobBoardPage />
   }

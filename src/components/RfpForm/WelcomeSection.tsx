@@ -34,6 +34,13 @@ export const WelcomeSection: FC<{ control: RfpControlType }> = ({
           After completing the form, you'll submit three transactions to set up
           the RFP. Then we'll provide a pre-formatted body for your referendum.
         </p>
+        <p className="text-sm">
+          New to RFPs?{" "}
+          <a href="/faq" className="text-lake-haze hover:underline font-medium">
+            Check out our FAQ
+          </a>
+          {" "}to learn how RFPs work and see bounty management resources.
+        </p>
       </div>
 
       {/* Prominent RFP Type Selection */}

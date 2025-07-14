@@ -26,7 +26,14 @@ export const WelcomeSection: FC = () => (
         </p>
       </div>
 
-      <div className="mt-8 text-sm text-pine-shadow-60">Grab some lemonade and let's get started.</div>
+      <div className="mt-8 space-y-2">
+        <div className="text-sm text-pine-shadow-60">Grab some lemonade and let's get started.</div>
+        <div className="text-sm">
+          <a href="/faq" className="text-lake-haze hover:underline font-medium">
+            Learn more about tips in our FAQ →
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 )
