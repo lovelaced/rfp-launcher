@@ -2,7 +2,7 @@
 
 import { matchedChain } from "@/chainRoute";
 import { selectedAccount$ } from "@/components/SelectAccount";
-import { TOKEN_SYMBOL } from "@/constants";
+import { TOKEN_SYMBOL, STABLE_INFO } from "@/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useStateObservable } from "@react-rxjs/core";
 import { addWeeks, differenceInDays } from "date-fns";
@@ -34,7 +34,7 @@ const defaultValues: Partial<FormSchema> = {
   projectTitle: "",
   projectScope: "",
   milestones: [],
-  fundingCurrency: TOKEN_SYMBOL,
+  fundingCurrency: STABLE_INFO ? Object.keys(STABLE_INFO)[0] : TOKEN_SYMBOL,
 };
 
 const steps = [
@@ -218,7 +218,7 @@ export const RfpForm = () => {
               <div className="text-sm text-pine-shadow-60 font-medium py-2 md:py-0 text-center order-2 md:order-2">
                 Step {currentStepIndex + 1} of {steps.length + 1} —{" "}
                 {isReviewStep
-                  ? "Review & Submit"
+                  ? "Review and Submit"
                   : steps[currentStepIndex].title}
               </div>
 

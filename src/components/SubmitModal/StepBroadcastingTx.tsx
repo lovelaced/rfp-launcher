@@ -20,7 +20,7 @@ export const StepBroadcastingTx: FC<{
         <div className="poster-alert alert-error">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
-            <span>Transaction failed. Please try again.</span>
+            <span>Something went wrong. Let's try that again!</span>
           </div>
         </div>
         <div className="space-y-2">
@@ -40,7 +40,7 @@ export const StepBroadcastingTx: FC<{
       <div className="poster-alert alert-success">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5" />
-          <span>Transaction succeeded!</span>
+          <span>All good! Transaction complete.</span>
         </div>
       </div>
     );
@@ -51,12 +51,12 @@ export const StepBroadcastingTx: FC<{
       <Loading />
       <p className="text-sm text-pine-shadow-60 text-center">
         {txEvt.type === "signed"
-          ? "Transaction signed, broadcasting…"
+          ? "Signed! Broadcasting your transaction..."
           : txEvt.type === "broadcasted"
-            ? "Transaction broadcasted, waiting to be included in a block…"
-            : "Transaction was found in a block, waiting for confirmation…" +
+            ? "Sent! Waiting for the blockchain to pick it up..."
+            : "Found it! Just waiting for final confirmation..." +
             (finalized && txEvt.found
-              ? ` (${txEvt.block.number - finalized.number})`
+              ? ` (${txEvt.block.number - finalized.number} blocks)`
               : "")}
       </p>
     </div>

@@ -52,7 +52,7 @@ export const ReviewSection: FC<ReviewSectionProps> = ({
 
   return (
     <div className="poster-card">
-      <h3 className="text-3xl font-medium mb-8 text-midnight-koi">Review & Submit</h3>
+      <h3 className="text-3xl font-medium mb-8 text-midnight-koi">Review and Submit</h3>
 
       {/* Insufficient Balance Warning */}
       {selectedAccount && !hasSufficientBalance && totalRequiredCost !== null && (
@@ -61,7 +61,7 @@ export const ReviewSection: FC<ReviewSectionProps> = ({
             <AlertCircle size={20} className="shrink-0" />
             <div>
               <strong>Insufficient Balance:</strong> You need at least{" "}
-              <strong className="font-semibold">{formatToken(totalRequiredCost)}</strong> to submit this tip referendum. Your
+              <strong className="font-semibold">{formatToken(totalRequiredCost)}</strong> to suggest this tip. Your
               current balance is <strong className="font-semibold">{formatToken(currentBalance)}</strong>. Please add
               funds or select another wallet.
             </div>
@@ -243,7 +243,7 @@ const TipSummary: FC<{
           {hasBeneficiaries ? (
             <div className="flex items-center gap-2">
               <CheckCircle2 size={16} className="text-lilypad" />
-              <span className="text-sm text-pine-shadow font-medium">Ready for Submission</span>
+              <span className="text-sm text-pine-shadow font-medium">Ready to Suggest</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-tomato-stamp">
@@ -349,7 +349,7 @@ const ResultingMarkdown: FC<{
       <div className="flex items-center justify-between mb-4">
         <h4 className="flex items-center gap-2 text-lg font-medium text-midnight-koi">
           <FileText size={20} className="text-tomato-stamp" />
-          Tip Referendum Body Preview
+          Tip Suggestion Preview
         </h4>
         <div className="flex items-center gap-2">
           <button
@@ -379,7 +379,7 @@ const ResultingMarkdown: FC<{
           <BadgeInfo size={16} className="mt-0.5 shrink-0" />
           <div className="text-sm">
             <strong>Next Step:</strong> Copy this Markdown content and paste it into the body of your referendum once
-            submitted.
+            suggested.
           </div>
         </div>
       </div>

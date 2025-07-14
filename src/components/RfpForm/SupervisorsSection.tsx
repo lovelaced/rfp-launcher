@@ -18,6 +18,7 @@ export const SupervisorsSection: FC<{ control: RfpControlType }> = ({
   control,
 }) => {
   const supervisors = useWatch({ name: "supervisors", control });
+  const isChildRfp = useWatch({ control, name: "isChildRfp" });
 
   return (
     <div className="poster-card">
@@ -28,8 +29,9 @@ export const SupervisorsSection: FC<{ control: RfpControlType }> = ({
       </h3>{" "}
       {/* Adjusted margin for consistency */}
       <p className="text-lg text-pine-shadow/80 mb-12 leading-relaxed">
-        Supervisors for this RFP, responsible for choosing the implementors and
-        evaluating the development process, quality control, and deliverables.
+        {isChildRfp
+          ? "Assign a curator for this Child Bounty RFP. Can be a bounty curator or bounty multisig."
+          : "Supervisors for this RFP, responsible for choosing the implementors and evaluating the development process, quality control, and deliverables."}
       </p>
       <div className="space-y-8">
         <FormField
@@ -98,7 +100,7 @@ const SupervisorsControl: FC<
       <div className="space-y-3">
         <div className="flex flex-col gap-4 sm:flex-row">
           <Input
-            placeholder="Supervisor address"
+            placeholder="Enter supervisor wallet address"
             value={newAddr}
             onChange={(evt) => setNewAddr(evt.target.value)}
             aria-invalid={addrInvalid}

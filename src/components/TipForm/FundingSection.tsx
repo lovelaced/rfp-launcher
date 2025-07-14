@@ -81,14 +81,14 @@ export const FundingSection: FC<{ control: TipControlType; onTooBigChange?: (isT
           control={control}
           name="tipAmount"
           label="Tip Amount (USD)"
-          description="amount to be awarded to the tip recipient"
+          description="how much the recipient gets"
           type="number"
         />
         <FormInputField
           control={control}
           name="referralFeePercent"
           label="Referral Fee (%)"
-          description="percentage of tip amount awarded to the referral"
+          description="your cut for making the suggestion"
           type="number"
           min={0}
           max={100}
@@ -228,7 +228,7 @@ const BalanceCheck: FC<{ control: TipControlType; trackDepositKSM: string | null
       <div className="poster-alert alert-success flex items-center gap-3 mt-2">
         <CheckCircle2 size={20} className="shrink-0 text-lilypad" />
         <div className="text-sm">
-          <strong>Nice:</strong> you have enough balance ({formatToken(currentBalance)}) to submit the tip referendum 🚀
+          <strong>Nice:</strong> you have enough funds to suggest the tip 🚀
         </div>
       </div>
     )
@@ -237,7 +237,7 @@ const BalanceCheck: FC<{ control: TipControlType; trackDepositKSM: string | null
   return (
     <div className="bg-canvas-cream border border-pine-shadow-20 rounded-lg p-6">
       <p className="text-pine-shadow leading-relaxed mb-4">
-        Please note that you'll need a minimum of {trackDepositKSM ?? '...'} to submit the tip referendum. (You'll get your deposit back once the referendum ends.)
+        Please note that you'll need a minimum of {trackDepositKSM ?? '...'} to suggest the tip. (You'll get your deposit back once the referendum ends.)
       </p>
 
       {tipAmountValue > 0 && estimatedCost && renderSpecificBalanceMessages()}

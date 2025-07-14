@@ -27,7 +27,7 @@ export const SubmitChildBountyModal = () => (
         <DialogTitle>Submit Child Bounty RFP</DialogTitle>
         <DialogDescription>
           Everything can be done in one transaction, but it might require a
-          multi-signature.
+          multisignature.
         </DialogDescription>
       </DialogHeader>
       <SubmitModalContent />

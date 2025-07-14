@@ -56,24 +56,24 @@ function App() {
               Job Board
             </a>
             <a
-              href="/create-rfp"
+              href="/launch-rfp"
               onClick={(e) => {
                 e.preventDefault()
-                navigate("/create-rfp")
+                navigate("/launch-rfp")
               }}
-              className={`text-sm font-medium hover:text-tomato-stamp transition-colors ${currentPage === "/create-rfp" ? "text-tomato-stamp" : "text-pine-shadow"}`}
+              className={`text-sm font-medium hover:text-tomato-stamp transition-colors ${currentPage === "/launch-rfp" ? "text-tomato-stamp" : "text-pine-shadow"}`}
             >
-              Create RFP
+              Launch RFP
             </a>
             <a
-              href="/create-tip"
+              href="/suggest-tip"
               onClick={(e) => {
                 e.preventDefault()
-                navigate("/create-tip")
+                navigate("/suggest-tip")
               }}
-              className={`text-sm font-medium hover:text-tomato-stamp transition-colors ${currentPage === "/create-tip" ? "text-tomato-stamp" : "text-pine-shadow"}`}
+              className={`text-sm font-medium hover:text-tomato-stamp transition-colors ${currentPage === "/suggest-tip" ? "text-tomato-stamp" : "text-pine-shadow"}`}
             >
-              Create Tip
+              Suggest Tip
             </a>
           </nav>
           <div className="h-6 w-px bg-pine-shadow-20 mx-2"></div> {/* Visual separator */}
@@ -84,9 +84,9 @@ function App() {
   )
 
   let pageContent
-  if (currentPage === "/create-rfp") {
+  if (currentPage === "/launch-rfp") {
     pageContent = <RfpForm />
-  } else if (currentPage === "/create-tip") {
+  } else if (currentPage === "/suggest-tip") {
     pageContent = <TipPage />
   } else {
     pageContent = <JobBoardPage />

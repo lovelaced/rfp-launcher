@@ -3,13 +3,12 @@
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import type { SubsquareBountyItem, SubsquareChildBountiesResponse } from "@/types/subsquare-bounty"
-import { formatToken } from "@/lib/formatToken"
+import { formatTokenForNetwork } from "@/lib/formatToken"
 import { PolkadotIdenticon } from "@polkadot-api/react-components"
 import { sliceMiddleAddr } from "@/lib/ss58"
 import { getSs58AddressInfo } from "polkadot-api"
 import { ExternalLink } from "@/components/ExternalLink"
-import { matchedChain } from "@/chainRoute"
-import { Briefcase, UserCircle, Tag, Calendar, Layers, ChevronDown, ChevronUp, Info, Users, CheckCircle2 } from "lucide-react"
+import { Briefcase, UserCircle, Tag, Calendar, Layers, ChevronDown, ChevronUp, Info } from "lucide-react"
 import { formatDate } from "@/lib/date"
 import ReactMarkdown from "react-markdown"
 // Import customComponents from your existing MarkdownPreview
@@ -18,7 +17,12 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button" // Assuming Button component is available
 
 interface BountyCardProps {
-  bounty: SubsquareBountyItem & { childBounties?: SubsquareChildBountiesResponse }
+  bounty: SubsquareBountyItem & { 
+    childBounties?: SubsquareChildBountiesResponse
+    network?: "kusama" | "polkadot"
+    submissionDeadline?: Date | null
+    curatorAcceptedDate?: Date | null
+  }
 }
 
 export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
@@ -28,28 +32,44 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
 
   const bountyValue = bounty.onchainData?.value ? BigInt(bounty.onchainData.value) : BigInt(0)
   const proposerAddress = bounty.onchainData?.meta?.proposer || bounty.proposer
-  const bountyStatus = bounty.onchainData?.state?.state || bounty.state
   const bountyTitle = bounty.onchainData?.description || bounty.title
   const bountyContent = bounty.content || "No detailed description provided for this RFP."
   
-  // Parse milestone count from content
-  const milestoneCount = (() => {
-    const milestoneMatches = bountyContent.match(/###\s*Milestone\s*\d+/gi)
-    return milestoneMatches ? milestoneMatches.length : 0
-  })()
+  // Determine actual status based on timeline
+  const determineStatus = () => {
+    const state = bounty.onchainData?.state?.state
+    
+    // If bounty is "Proposed", it's not yet active
+    if (state === "Proposed") {
+      return { label: "Proposed", color: "text-pine-shadow" }
+    }
+    
+    // No need to check for curator acceptance since RFPs have automatic curator assignment
+    
+    // For Active/Funded bounties, check submission deadline
+    if (state === "Active" || state === "Funded") {
+      // Check if we have a calculated submission deadline
+      if (bounty.submissionDeadline) {
+        const now = new Date()
+        if (now < bounty.submissionDeadline) {
+          return { label: "Accepting Submissions", color: "text-lilypad" }
+        }
+      } else {
+        // If no deadline calculated but bounty is active, assume accepting submissions
+        return { label: "Accepting Submissions", color: "text-lilypad" }
+      }
+    }
+    
+    // Check if team is selected (has child bounties)
+    if (bounty.childBounties && bounty.childBounties.total > 0) {
+      return { label: "Team Selected, In Progress", color: "text-lilypad" }
+    }
+    
+    return { label: "In Progress", color: "text-sun-bleach" }
+  }
   
-  // Calculate child bounty stats
-  const childBountyStats = bounty.childBounties ? {
-    totalPayouts: bounty.childBounties.total,
-    claimedPayouts: bounty.childBounties.items.filter(child => child.state === "Claimed").length,
-    totalPaidOut: bounty.childBounties.items
-      .filter(child => child.state === "Claimed")
-      .reduce((sum, child) => sum + (child.onchainData?.value ? BigInt(child.onchainData.value) : BigInt(0)), BigInt(0)),
-    hasActivity: bounty.childBounties.total > 0,
-    milestonePayouts: bounty.childBounties.items.filter(child => 
-      child.title.toLowerCase().includes('milestone') && child.state === "Claimed"
-    ).length
-  } : null
+  const statusInfo = determineStatus()
+  
 
   const MAX_COLLAPSED_HEIGHT_PX = 120 // Approx 5 lines of text
 
@@ -88,53 +108,37 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
       <div className="mb-4 pb-3 border-b border-pine-shadow-10">
         <div className="flex items-start gap-3">
           <Briefcase size={28} className="text-lake-haze shrink-0 mt-1" />
-          <h3 className="text-2xl font-medium text-midnight-koi leading-tight break-words">{bountyTitle}</h3>
+          <div className="flex-1">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <h3 className="text-2xl font-medium text-midnight-koi leading-tight break-words">{bountyTitle}</h3>
+              <span className={`text-xs font-bold uppercase px-2 py-1 rounded ${
+                bounty.network === "polkadot" 
+                  ? "bg-[#E6007A] text-white" 
+                  : "bg-black text-[var(--canvas-cream)]"
+              }`}>
+                {bounty.network || "kusama"}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
       {/* Card Body: Two Columns (Metadata Sidebar + Main Content) */}
       <div className="grid md:grid-cols-[minmax(200px,_1fr)_2fr] gap-x-6 gap-y-4 flex-grow">
         {/* Metadata Sidebar */}
         <div className="space-y-3 md:border-r md:border-pine-shadow-10 md:pr-6">
-          <MetadataItem icon={Layers} label="Value" value={formatToken(bountyValue)} />
+          <MetadataItem icon={Layers} label="Value" value={formatTokenForNetwork(bountyValue, bounty.network || "kusama")} />
           <MetadataItem 
             icon={Tag} 
             label="Status" 
-            value={
-              childBountyStats && childBountyStats.hasActivity ? (
-                <span className="text-lilypad font-medium">Team selected, In progress</span>
-              ) : (
-                bountyStatus
-              )
-            } 
+            value={<span className={`font-medium ${statusInfo.color}`}>{statusInfo.label}</span>} 
           />
-          {childBountyStats && childBountyStats.hasActivity && (
-            <>
-              {milestoneCount > 0 && (
-                <MetadataItem
-                  icon={CheckCircle2}
-                  label="Milestones"
-                  value={childBountyStats.milestonePayouts > 0 
-                    ? `${childBountyStats.milestonePayouts} of ${milestoneCount} paid`
-                    : `0 of ${milestoneCount} paid`
-                  }
-                  small
-                />
-              )}
-              <MetadataItem
-                icon={Users}
-                label="Payouts"
-                value={`${childBountyStats.totalPayouts} total (${childBountyStats.claimedPayouts} claimed)`}
-                small
-              />
-              {childBountyStats.totalPaidOut > 0 && (
-                <MetadataItem
-                  icon={CheckCircle2}
-                  label="Total paid"
-                  value={formatToken(childBountyStats.totalPaidOut)}
-                  small
-                />
-              )}
-            </>
+          {bounty.submissionDeadline && statusInfo.label === "Accepting Submissions" && (
+            <MetadataItem
+              icon={Calendar}
+              label="Deadline"
+              value={formatDate(bounty.submissionDeadline)}
+              small
+            />
           )}
           <MetadataItem
             icon={UserCircle}
@@ -164,7 +168,7 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
             small
           />
           <div className="pt-3 mt-3 border-t border-pine-shadow-10">
-            <ExternalLink href={`https://${matchedChain}.subsquare.io/treasury/bounties/${bounty.bountyIndex}`}>
+            <ExternalLink href={`https://${bounty.network || "kusama"}.subsquare.io/treasury/bounties/${bounty.bountyIndex}`}>
               <Button variant="outline" className="w-full poster-btn btn-secondary text-xs py-2">
                 <Info size={14} className="mr-2" /> View on Subsquare
               </Button>

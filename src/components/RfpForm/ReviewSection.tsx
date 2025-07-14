@@ -81,7 +81,7 @@ export const ReviewSection: FC<ReviewSectionProps> = ({
   return (
     <div className="poster-card">
       <h3 className="text-3xl font-medium mb-8 text-midnight-koi">
-        Review & Submit
+        Almost there! Let's review
       </h3>
 
       {/* Insufficient Balance Warning */}
@@ -92,15 +92,15 @@ export const ReviewSection: FC<ReviewSectionProps> = ({
             <div className="flex items-center gap-3">
               <AlertCircle size={20} className="shrink-0" />
               <div>
-                <strong>Insufficient Balance:</strong> You need at least{" "}
+                <strong>Oops!</strong> You'll need{" "}
                 <strong className="font-semibold">
                   {formatToken(totalRequiredCost)}
                 </strong>{" "}
-                to launch this RFP. Your current balance is{" "}
+                to launch this RFP, but you've got{" "}
                 <strong className="font-semibold">
                   {formatToken(currentBalance)}
                 </strong>
-                . Please add funds or select another wallet.
+                . Time to top up or try another wallet!
               </div>
             </div>
           </div>
@@ -299,7 +299,7 @@ const FundingSummary: FC<{
         <div className="mt-4 flex items-center gap-2 text-tomato-stamp">
           <TriangleAlert size={16} />
           <span className="text-sm font-medium">
-            Milestones must match prize pool.
+            Milestone amounts should add up to the prize pool
           </span>
           <button
             type="button"
@@ -416,7 +416,7 @@ const TimelineSummary: FC<{
           <div className="flex items-center gap-2 text-tomato-stamp">
             <TriangleAlert size={16} />
             <span className="text-sm font-medium">
-              Development time must be at least 7 days after funds expiry.
+              Please allow at least 7 days for development after funding expires
             </span>
           </div>
           <div className="pl-1">
@@ -574,7 +574,7 @@ const ProjectSummary: FC<{
           ) : (
             <div className="flex items-center gap-2 text-tomato-stamp">
               <TriangleAlert size={16} />
-              <span className="text-sm font-medium">Supervisor Required.</span>
+              <span className="text-sm font-medium">Please add at least one supervisor</span>
               <button
                 type="button"
                 onClick={() => navigateToStep("supervisors")}
@@ -639,7 +639,7 @@ const ResultingMarkdown: FC<{ isChildRfp: boolean }> = ({ isChildRfp }) => {
             className="poster-btn btn-primary flex items-center gap-1 text-xs py-2 px-3"
           >
             <Copy size={14} />
-            {copied ? "Copied!" : "Copy"}
+            {copied ? "Got it!" : "Copy"}
           </button>
         </div>
       </div>
@@ -650,9 +650,9 @@ const ResultingMarkdown: FC<{ isChildRfp: boolean }> = ({ isChildRfp }) => {
         <div className="flex items-start gap-2">
           <BadgeInfo size={16} className="mt-0.5 shrink-0" />
           <div className="text-sm">
-            <strong>Next Step:</strong> Copy this Markdown content and paste it
-            into the body of your {isChildRfp ? " child bounty " : "referendum"}{" "}
-            once submitted.
+            <strong>What's next?</strong> Copy this content and paste it
+            into your {isChildRfp ? "child bounty" : "referendum"}{" "}
+            description
           </div>
         </div>
       </div>

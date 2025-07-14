@@ -11,25 +11,25 @@ export const StepFinish: FC<{
       <div className="poster-alert alert-success">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5" />
-          <h3 className="text-sm font-medium">Referendum submitted successfully!</h3>
+          <h3 className="text-sm font-medium">Awesome! Your referendum is live!</h3>
         </div>
       </div>
       <div className="text-sm text-pine-shadow-90">
-        Your referendum has been submitted. You can now edit and add details on:
+        Your referendum is ready! You can add more details here:
       </div>
       <div className="flex gap-4 justify-center">
         <ExternalLink 
           href={`https://${matchedChain}.subsquare.io/referenda/${refIdx}`}
         >
           <span className="poster-btn btn-primary text-center">
-            View on Subsquare
+            Check it out on Subsquare
           </span>
         </ExternalLink>
         <ExternalLink
           href={`https://${matchedChain}.polkassembly.io/referenda/${refIdx}`}
         >
           <span className="poster-btn btn-secondary text-center">
-            View on Polkassembly
+            See it on Polkassembly
           </span>
         </ExternalLink>
       </div>

@@ -6,4 +6,4 @@ const paramChain = params.get("chain") as KnownChains;
 
 export const matchedChain: KnownChains = knownChains.includes(paramChain)
   ? paramChain
-  : "kusama";
+  : "polkadot";

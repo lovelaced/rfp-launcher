@@ -15,7 +15,7 @@ export const StepSubmitTx: FC<
     <div className="space-y-4">
       <TxExplanationView explanation={explanation} />
       <Button className="poster-btn btn-primary w-full" onClick={submit}>
-        Sign and Submit
+        Let's do this!
       </Button>
     </div>
   </div>

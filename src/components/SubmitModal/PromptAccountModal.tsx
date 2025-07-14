@@ -111,7 +111,7 @@ export const PromptAccountModal = () => {
         <div className="py-8 flex flex-col justify-center items-center space-y-2">
           <Loading />
           <p className="text-sm text-muted-foreground">
-            Checking your available balance...
+            Just checking your balance...
           </p>
         </div>
       );
@@ -137,7 +137,7 @@ export const PromptAccountModal = () => {
         <DialogHeader>
           <DialogTitle>Connect Wallet</DialogTitle>
           <DialogDescription>
-            Please connect a wallet to submit the RFP.
+            Let's connect your wallet to get started
           </DialogDescription>
         </DialogHeader>
         <PickExtension />

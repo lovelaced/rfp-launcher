@@ -32,7 +32,7 @@ const steps = [
   { id: "funding", title: "Tip Amount", Component: FundingSection },
   { id: "beneficiaries", title: "Recipients", Component: BeneficiariesSection },
   { id: "scope", title: "Tip Details", Component: ScopeSection },
-  { id: "review", title: "Review & Submit", Component: ReviewSection },
+  { id: "review", title: "Review and Submit", Component: ReviewSection },
 ]
 
 export const [formController$, setFormController] = createSignal<any>()
@@ -197,7 +197,7 @@ export const TipForm = () => {
                     className="poster-btn btn-primary flex items-center gap-2 w-full justify-center md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Rocket size={16} />
-                    Submit Tip Referendum
+                    Suggest Tip
                   </button>
                 )}
               </div>

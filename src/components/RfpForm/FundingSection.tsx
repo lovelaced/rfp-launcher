@@ -1,12 +1,13 @@
 "use client";
 
-import { STABLE_INFO, TOKEN_SYMBOL } from "@/constants";
+import { STABLE_INFO } from "@/constants";
 import { formatToken } from "@/lib/formatToken";
 import { useStateObservable } from "@react-rxjs/core";
 import { CheckCircle2, TriangleAlert } from "lucide-react";
 import { type FC } from "react";
 import { useWatch } from "react-hook-form";
 import { openSelectAccount, selectedAccount$ } from "../SelectAccount";
+import { Spinner } from "../Spinner";
 import {
   FormControl,
   FormDescription,
@@ -40,21 +41,21 @@ export const FundingSection: FC<{ control: RfpControlType }> = ({
           control={control}
           name="prizePool"
           label="Prize Pool (USD)"
-          description="amount awarded to implementors"
+          description="total amount for implementors"
           type="number"
         />
         <FormInputField
           control={control}
           name="findersFee"
           label="Finder's Fee (USD)"
-          description="amount awarded to the referral"
+          description="reward for finding and referring talent"
           type="number"
         />
         <FormInputField
           control={control}
           name="supervisorsFee"
           label="Supervisors' Fee (USD)"
-          description="amount split amongst supervisors"
+          description="payment for project supervisors"
           type="number"
         />
       </div>
@@ -75,9 +76,6 @@ export const FundingSection: FC<{ control: RfpControlType }> = ({
                       <SelectValue placeholder="Choose a currency" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={TOKEN_SYMBOL}>
-                        {TOKEN_SYMBOL}
-                      </SelectItem>
                       {Object.keys(STABLE_INFO!).map((symbol) => (
                         <SelectItem key={symbol} value={symbol}>
                           {symbol}
@@ -87,10 +85,8 @@ export const FundingSection: FC<{ control: RfpControlType }> = ({
                   </Select>
                 </FormControl>
                 <FormDescription className="text-xs text-pine-shadow-60 leading-tight">
-                  currency to use for the RFP. Native currency ({TOKEN_SYMBOL})
-                  will be submitted through a bounty, stables (
-                  {Object.keys(STABLE_INFO!).join("/")}) will create a multisig
-                  instead.
+                  Select a stablecoin for the RFP. Stablecoin RFPs ({Object.keys(STABLE_INFO!).join("/")}) 
+                  will create a multisig instead of a bounty.
                 </FormDescription>
                 <FormMessage className="text-tomato-stamp text-xs" />
               </FormItem>
@@ -167,8 +163,7 @@ const BalanceMessage = () => {
     <div className="poster-alert alert-success flex items-center gap-3 mt-2">
       <CheckCircle2 size={20} className="shrink-0 text-lilypad" />
       <div className="text-sm">
-        <strong>Nice:</strong> you have enough balance (
-        {formatToken(currentBalance)}) to launch the RFP 🚀
+        <strong>Nice:</strong> you have enough funds to launch the RFP 🚀
       </div>
     </div>
   );
@@ -179,37 +174,47 @@ const EstimatedSignerCost = () => {
   const ready = useStateObservable(priceTotals$)?.totalAmount ?? 0 > 0;
 
   return (
-    <p className="text-pine-shadow leading-relaxed mb-4">
-      Please note that you'll need a minimum of{" "}
-      {ready ? (
-        estimatedCost ? (
-          <strong className="text-midnight-koi font-semibold">
-            {formatToken(estimatedCost.deposits + estimatedCost.fees)}
-          </strong>
+    <div className="space-y-3 mb-4">
+      <p className="text-pine-shadow leading-relaxed">
+        Please note that you'll need a minimum of{" "}
+        {ready ? (
+          estimatedCost ? (
+            <strong className="text-midnight-koi font-semibold">
+              {formatToken(estimatedCost.deposits + estimatedCost.fees)}
+            </strong>
+          ) : (
+            <span className="text-pine-shadow-60">
+              (enter amount above)
+            </span>
+          )
         ) : (
           <span className="text-pine-shadow-60">
-            (calculating based on inputs…)
+            (enter prize pool to see cost)
           </span>
-        )
-      ) : (
-        <span className="text-pine-shadow-60">
-          (enter prize pool to see cost)
-        </span>
+        )}
+        {ready && estimatedCost && (
+          <>
+            {" "}
+            to submit the RFP
+            {estimatedCost.deposits ? (
+              <>
+                {" "}
+                ({formatToken(estimatedCost.fees)} in fees. You'll get{" "}
+                {formatToken(estimatedCost.deposits)} in deposits back once the
+                RFP ends)
+              </>
+            ) : null}
+          </>
+        )}
+      </p>
+      {ready && !estimatedCost && (
+        <div className="poster-alert alert-info flex items-center gap-3">
+          <Spinner size={16} className="shrink-0" />
+          <div className="text-sm">
+            <strong>Hang tight!</strong> We're calculating the exact costs... this might take a moment.
+          </div>
+        </div>
       )}
-      {ready && estimatedCost && (
-        <>
-          {" "}
-          to submit the RFP
-          {estimatedCost.deposits ? (
-            <>
-              {" "}
-              ({formatToken(estimatedCost.fees)} in fees. You'll get{" "}
-              {formatToken(estimatedCost.deposits)} in deposits back once the
-              RFP ends)
-            </>
-          ) : null}
-        </>
-      )}
-    </p>
+    </div>
   );
 };

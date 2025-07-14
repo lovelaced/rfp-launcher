@@ -6,7 +6,7 @@ import { sum } from "@/lib/math";
 import { MultiAddress } from "@polkadot-api/descriptors";
 import { state } from "@react-rxjs/core";
 import { Binary } from "polkadot-api";
-import { combineLatest, from, map, switchMap } from "rxjs";
+import { combineLatest, from, map, switchMap, of } from "rxjs";
 import { formValue$ } from "./formValue";
 import { bountyValue$, currencyIsStables$, priceToChainAmount } from "./price";
 import { decisionDeposit, submissionDeposit } from "./referendaConstants";
@@ -128,7 +128,7 @@ const depositCosts$ = combineLatest([
             ),
           ])
         : isChildRfp
-          ? [[0n]]
+          ? of([0n])
           : combineLatest([
               bountyDeposit$,
               submissionDeposit,

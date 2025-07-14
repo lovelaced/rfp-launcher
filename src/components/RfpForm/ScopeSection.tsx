@@ -47,8 +47,8 @@ export const ScopeSection: FC<{ control: RfpControlType }> = ({ control }) => {
       </h3>
 
       <p className="text-lg text-pine-shadow mb-8 leading-relaxed">
-        Define your project's goals, deliverables, and milestones. Think of this
-        as your project's roadmap — where you're going and how you'll get there.
+        Let's map out your project's goals, deliverables, and milestones. 
+        This is your roadmap to success.
       </p>
 
       <div className="space-y-8">
@@ -157,7 +157,7 @@ export const ScopeSection: FC<{ control: RfpControlType }> = ({ control }) => {
               <div className="mt-4 poster-alert alert-success">
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle size={16} />
-                  <span>Perfect! Milestones match the prize pool exactly.</span>
+                  <span>Nice work! Your budget is perfectly balanced.</span>
                 </div>
               </div>
             )}
@@ -209,7 +209,7 @@ const MilestonesControl: FC<
       {value.length === 0 ? (
         <div className="text-center py-8 text-pine-shadow-60">
           <p className="mb-4">
-            No milestones defined yet. Add your first milestone to get started.
+            Ready to add your first milestone? Let's break down your project!
           </p>
         </div>
       ) : (
@@ -261,7 +261,7 @@ const MilestonesControl: FC<
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="0"
+                        placeholder="Enter USD amount"
                         className="poster-input"
                         {...editProps(milestone, i, "amount")}
                       />

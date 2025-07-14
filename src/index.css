@@ -257,40 +257,75 @@
     @apply flex items-center gap-4;
   }
 
-  /* Kusama Network Badge - Poster Stamp Style */
+  /* Rubber Stamp Base Styles */
   .kusama-stamp,
-  .kusama-stamp:hover {
-    background-color: black;
-    color: var(--canvas-cream);
-    padding: 8px 16px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+  .polkadot-stamp {
+    position: relative;
+    padding: 10px 24px;
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
-    border-radius: 2px;
-    box-shadow: 0 2px 4px rgba(212, 93, 93, 0.2);
-    transform: rotate(-1deg);
     font-family: var(--font-display);
-  }
-  .kusama-stamp svg {
-    display: none;
+    background: transparent;
+    border: 3px double;
+    border-radius: 8px;
+    transform: rotate(-1deg);
+    transition: all 0.2s ease;
+    overflow: visible;
+    
+    /* Slightly uneven edges */
+    clip-path: polygon(
+      0% 15%, 2% 8%, 8% 3%, 15% 0%, 
+      85% 0%, 92% 2%, 97% 8%, 100% 15%, 
+      100% 85%, 98% 92%, 92% 97%, 85% 100%, 
+      15% 100%, 8% 98%, 3% 92%, 0% 85%
+    );
   }
 
-  /* Polkadot Network Badge - Poster Stamp Style */
-  .polkadot-stamp,
+  /* Stamp hover states */
+  .kusama-stamp:hover,
   .polkadot-stamp:hover {
-    background-color: #E6007A; /* Polkadot pink */
-    color: white;
-    padding: 8px 16px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    border-radius: 2px;
-    box-shadow: 0 2px 4px rgba(230, 0, 122, 0.3);
-    transform: rotate(-1deg);
-    font-family: var(--font-display);
+    transform: rotate(-1deg) scale(1.02) translateY(-1px);
   }
+
+  /* Kusama Network Rubber Stamp */
+  .kusama-stamp {
+    color: #000;
+    border-color: #000;
+    background-color: rgba(0, 0, 0, 0.05);
+    box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.1),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  }
+
+  .kusama-stamp:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 
+      0 3px 6px rgba(0, 0, 0, 0.15),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Polkadot Network Rubber Stamp */
+  .polkadot-stamp {
+    color: #E6007A;
+    border-color: #E6007A;
+    background-color: rgba(230, 0, 122, 0.05);
+    box-shadow: 
+      0 2px 4px rgba(230, 0, 122, 0.1),
+      inset 0 0 0 1px rgba(230, 0, 122, 0.1);
+  }
+
+  .polkadot-stamp:hover {
+    background-color: rgba(230, 0, 122, 0.08);
+    box-shadow: 
+      0 3px 6px rgba(230, 0, 122, 0.15),
+      inset 0 0 0 1px rgba(230, 0, 122, 0.15);
+  }
+
+
+  /* Hide dropdown arrow for stamps */
+  .kusama-stamp svg,
   .polkadot-stamp svg {
     display: none;
   }

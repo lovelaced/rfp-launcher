@@ -48,7 +48,7 @@ export const SelectAccount = () => {
         <DialogHeader>
           <DialogTitle>Connect</DialogTitle>
           <DialogDescription>
-            Connect using one of the polkadot extensions
+            Connect using one of the Polkadot extensions
           </DialogDescription>
         </DialogHeader>
         <PickExtension />

@@ -35,7 +35,7 @@ export const FormInputField = <T extends FieldValues>({
           <Input
             type={type}
             min={min}
-            placeholder="enter value"
+            placeholder="Enter value"
             className="poster-input"
             onWheel={
               type === "number" ? (evt) => evt.currentTarget.blur() : undefined
