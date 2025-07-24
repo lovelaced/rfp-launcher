@@ -7,7 +7,6 @@ const API_URLS = {
 
 export async function getNextRfpNumber(): Promise<number> {
   const network = matchedChain as "kusama" | "polkadot";
-  const networkPrefix = network === "polkadot" ? "DOT" : "KSM";
   
   try {
     if (network === "kusama") {
