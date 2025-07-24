@@ -26,11 +26,8 @@ export const AddressDisplay: FC<{ address: string }> = ({ address }) => {
           <span className="flex items-center gap-1">
             <span className="font-medium text-pine-shadow-90">{identity.value}</span>
             {identity.verified && (
-              <CheckCircle2 className="h-3 w-3 text-lilypad shrink-0" />
+              <CheckCircle2 className="h-3 w-3 text-green-600 shrink-0" />
             )}
-            <span className="text-xs text-pine-shadow-60 font-mono">
-              ({sliceMiddleAddr(address)})
-            </span>
           </span>
         ) : (
           <span className="font-mono text-xs text-pine-shadow-90 break-all">
