@@ -8,7 +8,10 @@ import {
   Plus,
 } from "lucide-react";
 import type { ChangeEvent, FC } from "react";
+import { useEffect, useState } from "react";
 import { type ControllerRenderProps, useWatch } from "react-hook-form";
+import { getNextRfpNumber, formatRfpTitle } from "@/services/rfpNumberService";
+import { matchedChain } from "@/chainRoute";
 import {
   FormControl,
   FormField,
@@ -29,6 +32,8 @@ import {
 export const ScopeSection: FC<{ control: RfpControlType }> = ({ control }) => {
   const prizePool = useWatch({ control, name: "prizePool" });
   const milestones = useWatch({ control, name: "milestones" });
+  const [nextRfpNumber, setNextRfpNumber] = useState<number | null>(null);
+  const [isLoadingNumber, setIsLoadingNumber] = useState(true);
 
   const prizePoolAmount = parseNumber(prizePool) || 0;
   const milestonesTotal = (milestones || [])
@@ -39,6 +44,14 @@ export const ScopeSection: FC<{ control: RfpControlType }> = ({ control }) => {
   const remainingBudget = prizePoolAmount - milestonesTotal;
   const isOverBudget = remainingBudget < 0;
   const isBudgetMatched = remainingBudget === 0 && prizePoolAmount > 0;
+
+  // Fetch the next RFP number on component mount
+  useEffect(() => {
+    getNextRfpNumber().then((number) => {
+      setNextRfpNumber(number);
+      setIsLoadingNumber(false);
+    });
+  }, []);
 
   return (
     <div className="poster-card">
@@ -55,19 +68,50 @@ export const ScopeSection: FC<{ control: RfpControlType }> = ({ control }) => {
         <FormField
           control={control}
           name="projectTitle"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="poster-label">Project Title</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter a descriptive project title"
-                  className="poster-input"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage className="text-tomato-stamp text-xs" />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            const networkPrefix = matchedChain === "polkadot" ? "DOT" : "KSM";
+            const placeholder = isLoadingNumber 
+              ? "Loading RFP number..." 
+              : `${networkPrefix} RFP #${nextRfpNumber}: Enter project description`;
+            
+            return (
+              <FormItem>
+                <FormLabel className="poster-label">
+                  Project Title
+                  {nextRfpNumber && (
+                    <span className="text-sm font-normal text-pine-shadow-60 ml-2">
+                      (Will be formatted as: {networkPrefix} RFP #{nextRfpNumber}: ...)
+                    </span>
+                  )}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={placeholder}
+                    className="poster-input"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // If user types something, ensure it has the RFP format
+                      if (value && nextRfpNumber) {
+                        const formatted = formatRfpTitle(value, nextRfpNumber);
+                        field.onChange(formatted);
+                      } else {
+                        field.onChange(value);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      // Format on blur as well
+                      if (e.target.value && nextRfpNumber) {
+                        const formatted = formatRfpTitle(e.target.value, nextRfpNumber);
+                        field.onChange(formatted);
+                      }
+                    }}
+                  />
+                </FormControl>
+                <FormMessage className="text-tomato-stamp text-xs" />
+              </FormItem>
+            );
+          }}
         />
 
         <FormField

@@ -226,17 +226,6 @@ export const JobBoardPage: React.FC = () => {
             const firstSpend = item.allSpends[0]
             value = firstSpend.amount || "0"
             
-            // Debug log to see spend structure
-            if (network === "polkadot" && item.referendumIndex === 1652) {
-              console.log("[DEBUG] Polkadot RFP spend data:", {
-                referendumIndex: item.referendumIndex,
-                title: item.title,
-                firstSpend: firstSpend,
-                assetKind: firstSpend.assetKind,
-                amount: firstSpend.amount
-              })
-            }
-            
             // Check if it's USDC/USDT or native token
             if (firstSpend.assetKind) {
               assetKind = firstSpend.assetKind

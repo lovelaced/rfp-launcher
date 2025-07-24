@@ -2,8 +2,11 @@ import { TOKEN_DECIMALS, TOKEN_SYMBOL } from "@/constants";
 
 export const formatToken = (value: bigint | null | undefined) => {
   if (value == null) return "";
+  
+  const numValue = Number(value) / 10 ** TOKEN_DECIMALS;
 
-  return `${(Number(value) / 10 ** TOKEN_DECIMALS).toLocaleString(undefined, {
+  return `${numValue.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 4,
   })} ${TOKEN_SYMBOL}`;
 };
@@ -32,8 +35,12 @@ export const formatTokenForNetwork = (value: bigint | null | undefined, network:
   
   const decimals = network === "kusama" ? 12 : 10;
   const symbol = network === "kusama" ? "KSM" : "DOT";
-
-  return `${(Number(value) / 10 ** decimals).toLocaleString(undefined, {
+  
+  const numValue = Number(value) / 10 ** decimals;
+  
+  // Format with up to 4 decimal places, but remove trailing zeros
+  return `${numValue.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 4,
   })} ${symbol}`;
 };

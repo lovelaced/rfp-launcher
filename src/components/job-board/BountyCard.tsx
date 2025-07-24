@@ -45,10 +45,14 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
     if (bounty.currency && (bounty.currency === "USDC" || bounty.currency === "USDT")) {
       // Stablecoins typically have 6 decimals
       const decimals = 6
-      const formatted = (Number(bountyValue) / 10 ** decimals).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
+      const value = Number(bountyValue) / 10 ** decimals
+      
+      // Format with up to 2 decimal places, but remove trailing zeros
+      const formatted = value.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
         maximumFractionDigits: 2,
       })
+      
       return `${formatted} ${bounty.currency}`
     }
     
