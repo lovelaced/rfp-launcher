@@ -24,24 +24,44 @@ interface BountyWithChildren extends SubsquareBountyItem {
   curatorAcceptedDate?: Date | null
 }
 
-// Helper function to parse submission deadline weeks from content
-const parseSubmissionWeeks = (content: string): number => {
-  // Look for patterns like "X Week(s) after Bounty Funding - Submission Deadline"
-  const patterns = [
+// Helper function to parse submission deadline from content
+const parseSubmissionDeadline = (content: string): Date | null => {
+  // First try to find explicit date patterns like "Monday, January 15 - Submission deadline"
+  const datePatterns = [
+    /(\w+,\s*\w+\s+\d+)\s*[-–]\s*[Ss]ubmission\s*[Dd]eadline/,
+    /[Ss]ubmission\s*[Dd]eadline\s*[-–]\s*(\w+,\s*\w+\s+\d+)/,
+    /(\w+,\s*\w+\s+\d+,\s*\d{4})\s*[-–]\s*[Ss]ubmission\s*[Dd]eadline/,
+  ]
+  
+  for (const pattern of datePatterns) {
+    const match = content.match(pattern)
+    if (match && match[1]) {
+      const dateStr = match[1]
+      // Try to parse the date string
+      const parsed = new Date(dateStr)
+      if (!isNaN(parsed.getTime())) {
+        return parsed
+      }
+    }
+  }
+  
+  // Fall back to old week-based format for legacy RFPs
+  const weekPatterns = [
     /(\d+)\s*[Ww]eeks?\s*after\s*[Bb]ounty\s*[Ff]unding\s*[-–]\s*[Ss]ubmission\s*[Dd]eadline/,
     /[Ss]ubmission\s*[Dd]eadline.*?(\d+)\s*[Ww]eeks?\s*after/,
     /(\d+)\s*[Ww]eeks?\s*[-–]\s*[Ss]ubmission\s*[Dd]eadline/
   ]
   
-  for (const pattern of patterns) {
+  for (const pattern of weekPatterns) {
     const match = content.match(pattern)
     if (match && match[1]) {
-      return parseInt(match[1], 10)
+      const weeks = parseInt(match[1], 10)
+      // Return weeks count as negative number to indicate it needs timeline calculation
+      return new Date(-weeks * 7 * 24 * 60 * 60 * 1000)
     }
   }
   
-  // Default to 1 week if not found
-  return 1
+  return null
 }
 
 // Helper function to determine actual bounty status based on timeline
@@ -62,23 +82,29 @@ const determineBountyStatus = (bounty: SubsquareBountyItem): {
     return { status: "proposed", submissionDeadline: null, curatorAcceptedDate: null }
   }
   
-  // Parse submission weeks from content
-  const submissionWeeks = parseSubmissionWeeks(content)
+  // Parse submission deadline from content
+  let submissionDeadline = parseSubmissionDeadline(content)
   
-  // Calculate submission deadline based on parsed weeks
-  let submissionDeadline: Date | null = null
-  if (becameActiveEvent) {
-    const activeDate = new Date(becameActiveEvent.indexer.blockTime)
-    submissionDeadline = new Date(activeDate.getTime() + submissionWeeks * 7 * 24 * 60 * 60 * 1000)
-  } else if (state === "Active" || state === "Funded") {
-    // If no BountyBecameActive event but state is Active/Funded, estimate based on creation date
-    // Look for the proposeBounty event as a fallback
-    const proposeEvent = timeline.find(event => event.method === "proposeBounty")
-    if (proposeEvent) {
-      const proposeDate = new Date(proposeEvent.indexer.blockTime)
-      // Assume it took about 1 week to get approved/funded
-      const estimatedActiveDate = new Date(proposeDate.getTime() + 7 * 24 * 60 * 60 * 1000)
-      submissionDeadline = new Date(estimatedActiveDate.getTime() + submissionWeeks * 7 * 24 * 60 * 60 * 1000)
+  // Handle legacy week-based format (negative timestamp indicates weeks)
+  if (submissionDeadline && submissionDeadline.getTime() < 0) {
+    const weeks = Math.abs(submissionDeadline.getTime()) / (7 * 24 * 60 * 60 * 1000)
+    
+    if (becameActiveEvent) {
+      const activeDate = new Date(becameActiveEvent.indexer.blockTime)
+      submissionDeadline = new Date(activeDate.getTime() + weeks * 7 * 24 * 60 * 60 * 1000)
+    } else if (state === "Active" || state === "Funded") {
+      // If no BountyBecameActive event but state is Active/Funded, estimate based on creation date
+      const proposeEvent = timeline.find(event => event.method === "proposeBounty")
+      if (proposeEvent) {
+        const proposeDate = new Date(proposeEvent.indexer.blockTime)
+        // Assume it took about 1 week to get approved/funded
+        const estimatedActiveDate = new Date(proposeDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+        submissionDeadline = new Date(estimatedActiveDate.getTime() + weeks * 7 * 24 * 60 * 60 * 1000)
+      } else {
+        submissionDeadline = null
+      }
+    } else {
+      submissionDeadline = null
     }
   }
   

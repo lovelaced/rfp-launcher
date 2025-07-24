@@ -5,14 +5,14 @@ import { selectedAccount$ } from "@/components/SelectAccount";
 import { TOKEN_SYMBOL, STABLE_INFO } from "@/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useStateObservable } from "@react-rxjs/core";
-import { addWeeks, differenceInDays } from "date-fns";
+import { addDays, differenceInDays } from "date-fns";
 import { ArrowLeft, ArrowRight, Rocket } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { SubmitBountyModal } from "../SubmitModal/SubmitBountyModal";
 import { submit } from "../SubmitModal/modalActions";
 import { Form } from "../ui/form";
-import { estimatedCost$, estimatedTimeline$, signerBalance$ } from "./data";
+import { estimatedCost$, signerBalance$ } from "./data";
 import { formValue$, setFormValue } from "./data/formValue";
 import { emptyNumeric, type FormSchema, formSchema } from "./formSchema";
 import { FundingSection } from "./FundingSection";
@@ -30,7 +30,7 @@ const defaultValues: Partial<FormSchema> = {
   supervisors: [],
   signatoriesThreshold: 2,
   projectCompletion: undefined,
-  fundsExpiry: 1,
+  submissionDeadline: addDays(new Date(), 14), // Default to 2 weeks from now
   projectTitle: "",
   projectScope: "",
   milestones: [],
@@ -55,7 +55,6 @@ export const RfpForm = () => {
   const estimatedCost = useStateObservable(estimatedCost$);
   const currentBalance = useStateObservable(signerBalance$);
   const selectedAccount = useStateObservable(selectedAccount$);
-  const estimatedTimeline = useStateObservable(estimatedTimeline$);
 
   const methods = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
@@ -151,13 +150,10 @@ export const RfpForm = () => {
     ? estimatedCost.deposits + estimatedCost.fees
     : null;
 
-  const fundsExpiry = getValues("fundsExpiry");
+  const submissionDeadline = getValues("submissionDeadline");
   const projectCompletion = getValues("projectCompletion");
-  const submissionDeadlineForDevDays = estimatedTimeline
-    ? addWeeks(estimatedTimeline.bountyFunding, fundsExpiry || 1)
-    : new Date();
-  const enoughDevDays = projectCompletion
-    ? differenceInDays(projectCompletion, submissionDeadlineForDevDays) >= 7
+  const enoughDevDays = projectCompletion && submissionDeadline
+    ? differenceInDays(projectCompletion, submissionDeadline) >= 7
     : true;
 
   const supervisors = getValues("supervisors");
@@ -190,7 +186,7 @@ export const RfpForm = () => {
                 currentBalance={currentBalance}
                 totalRequiredCost={totalRequiredCost}
                 setValue={setValue}
-                submissionDeadline={submissionDeadlineForDevDays}
+                submissionDeadline={submissionDeadline}
                 navigateToStep={navigateToStepById} // Pass the navigation function
               />
             ) : (

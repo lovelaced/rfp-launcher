@@ -1,6 +1,6 @@
 import { formatDate } from "@/lib/date";
 import { useStateObservable } from "@react-rxjs/core";
-import { addWeeks, differenceInDays, format } from "date-fns";
+import { addDays, differenceInDays, format } from "date-fns";
 import type { FC } from "react";
 import { useWatch } from "react-hook-form";
 // Removed Card, CardContent, CardHeader, CardTitle imports
@@ -13,32 +13,43 @@ import {
   FormMessage,
 } from "../ui/form";
 import { estimatedTimeline$ } from "./data";
-import { FormInputField } from "./FormInputField";
 import type { RfpControlType } from "./formSchema";
 
 export const TimelineSection: FC<{ control: RfpControlType }> = ({
   control,
 }) => {
-  const submissionDeadline = useSubmissionDeadline(control);
+  const estimatedTimeline = useStateObservable(estimatedTimeline$);
+  const submissionDeadline = useWatch({ name: "submissionDeadline", control });
+
+  // Calculate minimum submission deadline (7 days after worst-case funding)
+  const minSubmissionDate = estimatedTimeline?.lateBountyFunding 
+    ? addDays(estimatedTimeline.lateBountyFunding, 7)
+    : addDays(new Date(), 7);
 
   return (
     <div className="poster-card">
-      {" "}
-      {/* Changed from <Card> to <div className="poster-card"> */}
       <h3 className="text-3xl font-medium mb-8 text-midnight-koi">
         Timeline
-      </h3>{" "}
-      {/* Added consistent title */}
+      </h3>
       <div className="space-y-4">
-        {" "}
-        {/* Replaces CardContent */}
-        <FormInputField
+        <FormField
           control={control}
-          type="number"
-          min={1}
-          name="fundsExpiry"
-          label="Funds Expiry (Weeks)"
-          description="Number of weeks after successful funding until the RFP expires if no implementors are found."
+          name="submissionDeadline"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel className="poster-label">
+                Submission Deadline
+              </FormLabel>
+              <DatePicker
+                {...field}
+                disabled={(v) => v.getTime() < minSubmissionDate.getTime()}
+              />
+              <FormDescription className="text-xs text-pine-shadow-60 leading-tight">
+                The date by which project submissions must be received. Must be at least 7 days after the worst-case funding date ({formatDate(minSubmissionDate)}).
+              </FormDescription>
+              <FormMessage className="text-tomato-stamp text-xs" />
+            </FormItem>
+          )}
         />
         <FormField
           control={control}
@@ -54,7 +65,7 @@ export const TimelineSection: FC<{ control: RfpControlType }> = ({
                   v.getTime() <=
                   (submissionDeadline
                     ? submissionDeadline.getTime()
-                    : Date.now())
+                    : minSubmissionDate.getTime())
                 }
               />
               <FormDescription className="text-xs text-pine-shadow-60 leading-tight">
@@ -70,25 +81,16 @@ export const TimelineSection: FC<{ control: RfpControlType }> = ({
   );
 };
 
-const useSubmissionDeadline = (control: RfpControlType) => {
-  const estimatedTimeline = useStateObservable(estimatedTimeline$);
-  const fundsExpiry = useWatch({
-    name: "fundsExpiry",
-    control,
-  });
-
-  return estimatedTimeline?.bountyFunding
-    ? addWeeks(estimatedTimeline.bountyFunding, fundsExpiry || 1)
-    : null;
-};
-
 const EstimatedTimeline: FC<{ control: RfpControlType }> = ({ control }) => {
   const estimatedTimeline = useStateObservable(estimatedTimeline$);
   const projectCompletion = useWatch({
     name: "projectCompletion",
     control,
   });
-  const submissionDeadline = useSubmissionDeadline(control);
+  const submissionDeadline = useWatch({
+    name: "submissionDeadline",
+    control,
+  });
 
   const lateSubmissionDiff = estimatedTimeline?.referendumSubmissionDeadline
     ? differenceInDays(
@@ -136,7 +138,7 @@ const EstimatedTimeline: FC<{ control: RfpControlType }> = ({ control }) => {
             </li>
           ) : null}
           <li>
-            Funds Expiry Deadline:{" "}
+            Submission Deadline:{" "}
             <span className="text-midnight-koi font-medium">
               {formatDate(submissionDeadline)}
             </span>

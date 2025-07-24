@@ -558,8 +558,7 @@ const ProjectSummary: FC<{
             Submission Window
           </div>
           <div className="text-sm text-pine-shadow">
-            {formFields.fundsExpiry || 1} week
-            {(formFields.fundsExpiry || 1) > 1 ? "s" : ""} after funding
+            {formFields.submissionDeadline ? formatDate(formFields.submissionDeadline) : "Not set"}
           </div>
         </div>
 

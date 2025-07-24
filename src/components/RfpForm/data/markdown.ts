@@ -21,7 +21,7 @@ function generateMarkdown(
   const findersFee = parseNumber(data.findersFee) || 0;
   const supervisorsFee = parseNumber(data.supervisorsFee) || 0;
   const supervisors = data.supervisors || [];
-  const fundsExpiry = parseNumber(data.fundsExpiry) || 1;
+  const submissionDeadline = data.submissionDeadline;
   const projectCompletion = data.projectCompletion;
   const projectScope = data.projectScope || "";
   const milestones = data.milestones || [];
@@ -62,7 +62,7 @@ ${data.isChildRfp ? "" : "Excess or unused funds will be returned to the treasur
 ## Timeline
 
 ${format(new Date(), "eeee, LLLL dd")} - Single-ref RFP + supervisors ✅  
-${fundsExpiry} Week${fundsExpiry !== 1 ? "s" : ""} after RFP funding - submission deadline  
+${submissionDeadline ? format(submissionDeadline, "eeee, LLLL dd") : "TBD"} - Submission deadline  
 ${projectCompletion ? format(projectCompletion, "eeee, LLLL dd") : "TBD"} - Project completion  
 
 ## Project Scope

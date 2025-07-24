@@ -291,7 +291,23 @@ export const FaqPage = () => {
             <li><strong>Child RFPs:</strong> Can be created immediately if you're a curator (both networks)</li>
           </ul>
           <p className="text-sm mt-2">
-            After referendum approval, RFPs enter the submission window where developers can apply.
+            After referendum approval and funding, RFPs enter the submission window where developers can apply.
+          </p>
+        </div>
+      )
+    },
+    {
+      question: "How do submission deadlines work?",
+      answer: (
+        <div className="space-y-2">
+          <p>
+            When creating an RFP, you specify a submission deadline - a specific date when proposal 
+            submissions close. This must be at least 7 days after the worst-case funding date to 
+            give developers adequate time to prepare proposals.
+          </p>
+          <p>
+            The submission deadline is fixed regardless of when the RFP actually gets funded, 
+            providing predictability for both RFP creators and potential implementers.
           </p>
         </div>
       )

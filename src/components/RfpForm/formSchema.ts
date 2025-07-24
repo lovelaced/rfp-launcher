@@ -1,5 +1,6 @@
 import type { Control } from "react-hook-form";
 import { z } from "zod";
+import { addDays } from "date-fns";
 
 export const formSchema = z.object({
   isChildRfp: z.boolean(),
@@ -9,7 +10,12 @@ export const formSchema = z.object({
   supervisorsFee: z.coerce.number(),
   supervisors: z.array(z.string()).min(1),
   signatoriesThreshold: z.coerce.number(),
-  fundsExpiry: z.coerce.number().positive(),
+  submissionDeadline: z.date().refine(
+    (date) => date.getTime() >= addDays(new Date(), 7).getTime(),
+    {
+      message: "Submission deadline must be at least 7 days from today",
+    }
+  ),
   projectCompletion: z.date().optional(), // Changed to optional
   projectTitle: z.string().nonempty(),
   projectScope: z.string(),
@@ -21,7 +27,18 @@ export const formSchema = z.object({
     }),
   ),
   fundingCurrency: z.string().nonempty(),
-});
+}).refine(
+  (data) => {
+    if (data.projectCompletion && data.submissionDeadline) {
+      return data.projectCompletion.getTime() >= addDays(data.submissionDeadline, 7).getTime();
+    }
+    return true;
+  },
+  {
+    message: "Project completion must be at least 7 days after submission deadline",
+    path: ["projectCompletion"],
+  }
+);
 
 export const parseNumber = (value: string | number | undefined) => {
   try {
