@@ -231,13 +231,46 @@
     }
   }
 
+  /* Responsive typography for brand */
+  @media (min-width: 640px) {
+    .poster-brand-title {
+      font-size: 1.25rem; /* 20px */
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .poster-brand-title {
+      font-size: 1.5rem; /* 24px */
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .poster-brand-title {
+      font-size: 1.75rem; /* 28px */
+    }
+  }
+  
+  @media (min-width: 1280px) {
+    .poster-brand-title {
+      font-size: 1.875rem; /* 30px */
+    }
+  }
+  
+  /* Header padding adjustments */
+  @media (max-width: 640px) {
+    .poster-header {
+      padding: 0.75rem 0;
+    }
+  }
+
+
   .poster-brand {
     @apply flex flex-col;
   }
 
   .poster-brand-title {
     font-family: var(--font-display);
-    font-size: 1.75rem;
+    font-size: 1.125rem; /* 18px - mobile first */
     font-weight: 600;
     color: var(--midnight-koi);
     letter-spacing: 0.02em;
@@ -253,9 +286,6 @@
     margin-top: 2px;
   }
 
-  .poster-actions {
-    @apply flex items-center gap-4;
-  }
 
   /* Rubber Stamp Base Styles */
   .kusama-stamp,

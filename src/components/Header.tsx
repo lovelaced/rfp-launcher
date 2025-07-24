@@ -12,11 +12,11 @@ import { KnownChains, matchedChain } from "@/chainRoute";
 
 export const Header = () => {
   return (
-    <>
+    <div className="flex items-center gap-2 flex-wrap">
       <SelectAccount />
       <ChainSelector />
       {USE_CHOPSTICKS && <ChopsticksController />}
-    </>
+    </div>
   );
 };
 
