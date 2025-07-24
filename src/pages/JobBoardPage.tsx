@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const API_URLS = {
   kusama: "https://kusama-api.subsquare.io/treasury/bounties?page=1&pageSize=100",
-  polkadot: "https://polkadot-api.subsquare.io/treasury/bounties?page=1&pageSize=100"
+  polkadot: "https://polkadot-api.subsquare.io/treasury/bounties?page=1&pageSize=100",
+  polkadotReferenda: "https://polkadot-api.subsquare.io/search?text=rfp&page=1&pageSize=100",
+  kusamaReferenda: "https://kusama-api.subsquare.io/search?text=rfp&page=1&pageSize=100"
 }
 
 type SortKey = "date" | "amount" | "title"
@@ -23,6 +25,9 @@ interface BountyWithChildren extends SubsquareBountyItem {
   submissionDeadline?: Date | null
   projectCompletionDate?: Date | null
   curatorAcceptedDate?: Date | null
+  isReferendum?: boolean
+  currency?: string
+  assetKind?: any
 }
 
 // Helper function to parse submission deadline from content
@@ -175,6 +180,124 @@ export const JobBoardPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active")
 
   useEffect(() => {
+    const fetchRfpFromSearch = async (network: "kusama" | "polkadot"): Promise<BountyWithChildren[]> => {
+      try {
+        const url = network === "polkadot" ? API_URLS.polkadotReferenda : API_URLS.kusamaReferenda
+        const response = await fetch(url)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${network} RFP search results: ${response.statusText}`)
+        }
+        const data = await response.json()
+        
+        
+        // The search API returns results in different sections
+        let allRfpItems = []
+        
+        // For Polkadot: only get referenda (not treasury spends which are duplicates)
+        // For Kusama: only get bounties
+        if (network === "polkadot") {
+          // Only get openGov referenda for Polkadot, filter out rejected
+          const referenda = data.openGovReferenda || []
+          allRfpItems = referenda.filter((item: any) => {
+            // Filter out rejected referenda
+            const state = item.state?.name || item.state || ""
+            return state !== "Rejected" && state !== "Cancelled" && state !== "TimedOut"
+          })
+        } else {
+          // Only get bounties and child bounties for Kusama
+          const bounties = data.bounties || []
+          const childBounties = data.childBounties || []
+          allRfpItems = [...bounties, ...childBounties]
+        }
+        
+        
+        // Convert to bounty-like format for compatibility
+        return allRfpItems.map((item: any) => {
+          const isReferendum = !!item.referendumIndex
+          const index = item.referendumIndex || item.proposalIndex || item.bountyIndex || 0
+          
+          // Get the actual value and currency from different sources
+          let value = "0"
+          let currency = network === "polkadot" ? "DOT" : "KSM"
+          let assetKind = null
+          
+          if (item.allSpends && item.allSpends.length > 0) {
+            // For treasury spends/referenda, get the first spend's details
+            const firstSpend = item.allSpends[0]
+            value = firstSpend.amount || "0"
+            
+            // Debug log to see spend structure
+            if (network === "polkadot" && item.referendumIndex === 1652) {
+              console.log("[DEBUG] Polkadot RFP spend data:", {
+                referendumIndex: item.referendumIndex,
+                title: item.title,
+                firstSpend: firstSpend,
+                assetKind: firstSpend.assetKind,
+                amount: firstSpend.amount
+              })
+            }
+            
+            // Check if it's USDC/USDT or native token
+            if (firstSpend.assetKind) {
+              assetKind = firstSpend.assetKind
+              currency = firstSpend.assetKind.symbol || currency
+            }
+          } else if (item.value) {
+            value = item.value
+          } else if (item.onchainData?.treasurySpend?.amount) {
+            // For referenda with treasury spend info
+            value = item.onchainData.treasurySpend.amount
+          } else if (item.requestedAmount) {
+            // Some items might have requestedAmount field
+            value = item.requestedAmount
+          }
+          
+          // Extract content from contentSummary if available
+          const content = item.content || item.contentSummary?.summary || ""
+          
+          const statusInfo = determineBountyStatus({
+            ...item,
+            onchainData: {
+              ...item.onchainData,
+              state: { state: item.state?.name || item.state || "Active" },
+              timeline: item.onchainData?.timeline || []
+            },
+            content: content
+          })
+          
+          return {
+            bountyIndex: index,
+            title: item.title || `RFP #${index}`,
+            content: content,
+            createdAt: item.createdAt || new Date().toISOString(),
+            lastActivityAt: item.updatedAt || item.createdAt || new Date().toISOString(),
+            onchainData: {
+              state: { state: item.state?.name || item.state || "Active" },
+              value: value,
+              description: item.title || `RFP #${index}`,
+              meta: {
+                proposer: item.proposer || item.onchainData?.proposer || ""
+              },
+              timeline: item.onchainData?.timeline || []
+            },
+            childBounties: { items: [], page: 1, pageSize: 100, total: 0 },
+            network: network,
+            submissionDeadline: statusInfo.submissionDeadline,
+            projectCompletionDate: statusInfo.projectCompletionDate,
+            curatorAcceptedDate: null,
+            // Flag to indicate this is a referendum/proposal, not a bounty
+            isReferendum: isReferendum,
+            // Store currency info for proper display
+            currency: currency,
+            assetKind: assetKind
+          } as BountyWithChildren
+        })
+      } catch (err) {
+        console.error(`Error fetching ${network} RFP search results:`, err)
+        return []
+      }
+    }
+
     const fetchBountiesFromNetwork = async (network: "kusama" | "polkadot"): Promise<BountyWithChildren[]> => {
       try {
         const response = await fetch(API_URLS[network])
@@ -183,11 +306,18 @@ export const JobBoardPage: React.FC = () => {
         }
         const data: SubsquareBountiesResponse = await response.json()
         const rfpBounties = data.items.filter(
-          (bounty) =>
-            bounty.onchainData &&
-            ((bounty.onchainData.description && bounty.onchainData.description.toUpperCase().includes("RFP")) ||
-              (bounty.title && bounty.title.toUpperCase().includes("RFP"))) &&
-            ["Proposed", "Approved", "Funded", "Active", "PendingPayout"].includes(bounty.onchainData.state.state),
+          (bounty) => {
+            const hasOnchainData = !!bounty.onchainData
+            // Check title, description, and content fields for RFP
+            const hasRFPInDescription = bounty.onchainData?.description?.toUpperCase().includes("RFP") || false
+            const hasRFPInTitle = bounty.title?.toUpperCase().includes("RFP") || false
+            const hasRFPInContent = bounty.content?.toUpperCase().includes("RFP") || false
+            const hasValidState = bounty.onchainData?.state?.state ? 
+              ["Proposed", "Approved", "Funded", "Active", "PendingPayout"].includes(bounty.onchainData.state.state) : false
+            
+            const isRFP = hasOnchainData && (hasRFPInDescription || hasRFPInTitle || hasRFPInContent) && hasValidState
+            return isRFP
+          }
         )
         
         // Fetch child bounties for each RFP bounty
@@ -227,8 +357,13 @@ export const JobBoardPage: React.FC = () => {
         
         return bountiesWithChildren
       } catch (err) {
-        console.error(`Error fetching ${network} bounties:`, err)
-        return []
+        console.error(`[ERROR] Error fetching ${network} bounties:`, {
+          network,
+          error: err,
+          message: err instanceof Error ? err.message : 'Unknown error',
+          url: API_URLS[network]
+        })
+        throw err
       }
     }
 
@@ -236,15 +371,51 @@ export const JobBoardPage: React.FC = () => {
       setIsLoading(true)
       setError(null)
       try {
-        // Fetch from both networks in parallel
-        const [kusamaBounties, polkadotBounties] = await Promise.all([
+        // Fetch from both networks independently to handle failures gracefully
+        // For Kusama: fetch bounties (RFPs are bounties)
+        // For Polkadot: fetch bounties AND search for referenda RFPs
+        const results = await Promise.allSettled([
           fetchBountiesFromNetwork("kusama"),
-          fetchBountiesFromNetwork("polkadot")
+          fetchBountiesFromNetwork("polkadot"),
+          fetchRfpFromSearch("polkadot")
+          // Don't fetch search results for Kusama - we get those from bounties
         ])
         
-        // Combine bounties from both networks
-        const allBounties = [...kusamaBounties, ...polkadotBounties]
+        const kusamaBounties = results[0].status === 'fulfilled' ? results[0].value : []
+        const polkadotBounties = results[1].status === 'fulfilled' ? results[1].value : []
+        const polkadotRfpSearch = results[2].status === 'fulfilled' ? results[2].value : []
+        
+        // Log any errors
+        if (results[0].status === 'rejected') {
+          console.error('[ERROR] Kusama bounties fetch failed:', results[0].reason)
+        }
+        if (results[1].status === 'rejected') {
+          console.error('[ERROR] Polkadot bounties fetch failed:', results[1].reason)
+        }
+        if (results[2].status === 'rejected') {
+          console.error('[ERROR] Polkadot RFP search failed:', results[2].reason)
+        }
+        
+        // Combine all results, avoiding duplicates by creating a unique key
+        const bountyMap = new Map<string, any>()
+        
+        // Add all bounties to map, using network + index as key
+        const allItems = [...kusamaBounties, ...polkadotBounties, ...polkadotRfpSearch]
+        allItems.forEach(bounty => {
+          const key = `${bounty.network}-${bounty.bountyIndex}`
+          // Only add if not already present (prefer bounties over search results)
+          if (!bountyMap.has(key)) {
+            bountyMap.set(key, bounty)
+          }
+        })
+        
+        const allBounties = Array.from(bountyMap.values())
         setBounties(allBounties)
+        
+        // Show error only if both networks failed
+        if (results[0].status === 'rejected' && results[1].status === 'rejected') {
+          setError("Failed to fetch bounties from both Kusama and Polkadot networks.")
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An unknown error occurred.")
         console.error(err)

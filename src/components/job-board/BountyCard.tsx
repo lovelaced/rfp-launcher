@@ -23,6 +23,9 @@ interface BountyCardProps {
     submissionDeadline?: Date | null
     projectCompletionDate?: Date | null
     curatorAcceptedDate?: Date | null
+    isReferendum?: boolean
+    currency?: string
+    assetKind?: any
   }
 }
 
@@ -33,7 +36,44 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
 
   const bountyValue = bounty.onchainData?.value ? BigInt(bounty.onchainData.value) : BigInt(0)
   const proposerAddress = bounty.onchainData?.meta?.proposer || bounty.proposer
-  const bountyTitle = bounty.onchainData?.description || bounty.title
+  
+  // Format value with correct currency
+  const formatValue = () => {
+    if (!bountyValue) return "0"
+    
+    // Check if it's a stablecoin (USDC/USDT)
+    if (bounty.currency && (bounty.currency === "USDC" || bounty.currency === "USDT")) {
+      // Stablecoins typically have 6 decimals
+      const decimals = 6
+      const formatted = (Number(bountyValue) / 10 ** decimals).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+      return `${formatted} ${bounty.currency}`
+    }
+    
+    // Otherwise use native token formatting
+    return formatTokenForNetwork(bountyValue, bounty.network || "kusama")
+  }
+  
+  // Parse the RFP title to extract the RFP number and clean title
+  const originalTitle = bounty.onchainData?.description || bounty.title || ""
+  const networkPrefix = bounty.network === "polkadot" ? "DOT" : "KSM"
+  
+  // Try to extract RFP number from the title
+  const rfpMatch = originalTitle.match(/(?:DOT|KSM)?\s*RFP\s*#?(\d+)(?:\s*[-:]?\s*(.*))?/i)
+  let bountyTitle = originalTitle
+  
+  if (rfpMatch) {
+    const rfpNumber = rfpMatch[1]
+    const subtitle = rfpMatch[2] || ""
+    // Standardize the format
+    bountyTitle = `${networkPrefix} RFP #${rfpNumber}${subtitle ? `: ${subtitle.trim()}` : ""}`
+  } else if (originalTitle.toLowerCase().includes("rfp")) {
+    // Has RFP but no number - just ensure network prefix
+    bountyTitle = `${networkPrefix} ${originalTitle}`
+  }
+    
   const bountyContent = bounty.content || "No detailed description provided for this RFP."
   
   // Determine actual status based on timeline
@@ -130,7 +170,7 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
       <div className="grid md:grid-cols-[minmax(200px,_1fr)_2fr] gap-x-6 gap-y-4 flex-grow">
         {/* Metadata Sidebar */}
         <div className="space-y-3 md:border-r md:border-pine-shadow-10 md:pr-6">
-          <MetadataItem icon={Layers} label="Value" value={formatTokenForNetwork(bountyValue, bounty.network || "kusama")} />
+          <MetadataItem icon={Layers} label="Value" value={formatValue()} />
           <MetadataItem 
             icon={Tag} 
             label="Status" 
@@ -172,7 +212,11 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
             small
           />
           <div className="pt-3 mt-3 border-t border-pine-shadow-10">
-            <ExternalLink href={`https://${bounty.network || "kusama"}.subsquare.io/treasury/bounties/${bounty.bountyIndex}`}>
+            <ExternalLink href={
+              bounty.isReferendum 
+                ? `https://${bounty.network || "kusama"}.subsquare.io/referenda/${bounty.bountyIndex}`
+                : `https://${bounty.network || "kusama"}.subsquare.io/treasury/bounties/${bounty.bountyIndex}`
+            }>
               <Button variant="outline" className="w-full poster-btn btn-secondary text-xs py-2">
                 <Info size={14} className="mr-2" /> View on Subsquare
               </Button>
