@@ -90,14 +90,8 @@ export const ScopeSection: FC<{ control: RfpControlType }> = ({ control }) => {
                     className="poster-input"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      // If user types something, ensure it has the RFP format
-                      if (value && nextRfpNumber) {
-                        const formatted = formatRfpTitle(value, nextRfpNumber);
-                        field.onChange(formatted);
-                      } else {
-                        field.onChange(value);
-                      }
+                      // Just pass through the value without formatting while typing
+                      field.onChange(e.target.value);
                     }}
                     onBlur={(e) => {
                       // Format on blur as well

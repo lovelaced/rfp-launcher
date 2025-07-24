@@ -6,6 +6,7 @@ import { JobBoardPage } from "./pages/JobBoardPage"
 import { TipPage } from "./pages/TipPage"
 import { FaqPage } from "./pages/FaqPage"
 import { useState, useEffect } from "react"
+import { matchedChain } from "./chainRoute"
 
 function App() {
   const [currentPage, setCurrentPage] = useState(window.location.pathname)

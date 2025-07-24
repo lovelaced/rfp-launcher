@@ -136,14 +136,26 @@ export const FaqPage = () => {
       question: "How do RFPs work?",
       answer: (
         <div className="space-y-2">
-          <p>The RFP process involves:</p>
+          <p>The RFP process varies by network:</p>
+          <p><strong>On Kusama:</strong></p>
           <ol className="list-decimal pl-5 space-y-1">
-            <li>Someone identifies a need and creates an RFP with funding</li>
-            <li>The RFP is approved through governance</li>
-            <li>Developers submit proposals to complete the work</li>
-            <li>Supervisors review and select the best proposal</li>
+            <li>RFPs are created as bounties through governance</li>
+            <li>Once approved, developers can submit proposals</li>
+            <li>Bounty curators review and select the best proposal</li>
             <li>Work is completed and payment is released based on milestones</li>
           </ol>
+          <p className="mt-2"><strong>On Polkadot:</strong></p>
+          <ol className="list-decimal pl-5 space-y-1">
+            <li>RFPs are funded through treasury proposals that create multisigs</li>
+            <li>The multisig signers (supervisors) manage the RFP process</li>
+            <li>Developers submit proposals to the supervisors</li>
+            <li>Supervisors select winners and release payments from the multisig</li>
+          </ol>
+          <p className="mt-2">
+            While Polkadot has a bounty pallet, it only supports native DOT payments. Since many 
+            RFPs prefer stablecoin payments (USDC/USDT), Polkadot RFPs use multisigs which can 
+            handle any asset type on Asset Hub.
+          </p>
         </div>
       )
     },
@@ -165,11 +177,15 @@ export const FaqPage = () => {
           <p>
             RFP payments are milestone-based. When you create an RFP, you define specific 
             milestones with associated payments. Developers receive payment as they complete 
-            each milestone, verified by the supervisors.
+            each milestone, verified by the supervisors or curators.
           </p>
           <p>
-            The total funding includes the prize pool for developers, plus fees for finders 
-            (who refer talented developers) and supervisors (who manage the process).
+            The total funding includes the prize pool for developers, plus optional finder's fees 
+            for those who refer talented developers to the RFP.
+          </p>
+          <p>
+            <strong>Note:</strong> For child bounties on both Kusama and Polkadot, the parent bounty 
+            curators already receive compensation, so no additional supervisor fees are needed.
           </p>
         </div>
       )
@@ -304,8 +320,8 @@ export const FaqPage = () => {
         <div className="space-y-2">
           <p>
             When creating an RFP, you specify a submission deadline - a specific date when proposal 
-            submissions close. This must be at least 7 days after the worst-case funding date to 
-            give developers adequate time to prepare proposals.
+            submissions close. This must be at least 7 days from today to give developers adequate 
+            time to prepare proposals.
           </p>
           <p>
             The submission deadline is fixed regardless of when the RFP actually gets funded, 

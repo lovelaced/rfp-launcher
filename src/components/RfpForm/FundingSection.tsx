@@ -3,9 +3,9 @@
 import { STABLE_INFO } from "@/constants";
 import { formatToken } from "@/lib/formatToken";
 import { useStateObservable } from "@react-rxjs/core";
-import { CheckCircle2, TriangleAlert } from "lucide-react";
-import { type FC } from "react";
-import { useWatch } from "react-hook-form";
+import { CheckCircle2, TriangleAlert, Info } from "lucide-react";
+import { type FC, useState, useEffect } from "react";
+import { useWatch, useFormContext } from "react-hook-form";
 import { openSelectAccount, selectedAccount$ } from "../SelectAccount";
 import { Spinner } from "../Spinner";
 import {
@@ -25,13 +25,23 @@ import {
 } from "../ui/select";
 import { estimatedCost$, priceTotals$, signerBalance$ } from "./data";
 import { FormInputField } from "./FormInputField";
-import { type RfpControlType } from "./formSchema";
+import { type RfpControlType, emptyNumeric } from "./formSchema";
 import { BountyCheck } from "./FundingBountyCheck";
 
 export const FundingSection: FC<{ control: RfpControlType }> = ({
   control,
 }) => {
+  const { setValue } = useFormContext();
   const isChildRfp = useWatch({ control, name: "isChildRfp" });
+  const findersFee = useWatch({ control, name: "findersFee" });
+  const [showFindersFee, setShowFindersFee] = useState(false);
+  
+  // Show finder's fee input if there's already a value
+  useEffect(() => {
+    if (findersFee && parseFloat(findersFee.toString()) > 0) {
+      setShowFindersFee(true);
+    }
+  }, [findersFee]);
 
   return (
     <div className="poster-card">
@@ -44,21 +54,58 @@ export const FundingSection: FC<{ control: RfpControlType }> = ({
           description="total amount for implementors"
           type="number"
         />
-        <FormInputField
-          control={control}
-          name="findersFee"
-          label="Finder's Fee (USD)"
-          description="reward for finding and referring talent"
-          type="number"
-        />
-        <FormInputField
-          control={control}
-          name="supervisorsFee"
-          label="Supervisors' Fee (USD)"
-          description="payment for project supervisors"
-          type="number"
-        />
+        {!isChildRfp && (
+          <FormInputField
+            control={control}
+            name="supervisorsFee"
+            label="Supervisors' Fee (USD)"
+            description="payment for project supervisors"
+            type="number"
+          />
+        )}
+        {showFindersFee ? (
+          <div className="relative">
+            <FormInputField
+              control={control}
+              name="findersFee"
+              label="Finder's Fee (USD)"
+              description="reward for finding and referring talent"
+              type="number"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setShowFindersFee(false);
+                // Clear the finder's fee value
+                setValue("findersFee", emptyNumeric);
+              }}
+              className="absolute top-0 right-0 text-sm text-pine-shadow-60 hover:text-midnight-koi hover:underline inline-flex items-center gap-1"
+            >
+              <span>×</span> Remove
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center">
+            <button
+              type="button"
+              onClick={() => setShowFindersFee(true)}
+              className="poster-btn btn-secondary text-sm"
+            >
+              Add Finder's Fee
+            </button>
+          </div>
+        )}
       </div>
+      {showFindersFee && (
+        <div className="poster-alert alert-info flex items-start gap-3 mb-6">
+          <Info size={20} className="shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <strong>About Finder's Fees:</strong> Adding a finder's fee will create an additional 
+            child bounty specifically for rewarding those who refer talented developers to your RFP. 
+            This incentivizes the community to help find the best implementers for your project.
+          </div>
+        </div>
+      )}
       {STABLE_INFO && !isChildRfp ? (
         <div className="mb-8">
           <FormField

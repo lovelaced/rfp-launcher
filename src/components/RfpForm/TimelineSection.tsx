@@ -21,10 +21,8 @@ export const TimelineSection: FC<{ control: RfpControlType }> = ({
   const estimatedTimeline = useStateObservable(estimatedTimeline$);
   const submissionDeadline = useWatch({ name: "submissionDeadline", control });
 
-  // Calculate minimum submission deadline (7 days after worst-case funding)
-  const minSubmissionDate = estimatedTimeline?.lateBountyFunding 
-    ? addDays(estimatedTimeline.lateBountyFunding, 7)
-    : addDays(new Date(), 7);
+  // Calculate minimum submission deadline (7 days from today)
+  const minSubmissionDate = addDays(new Date(), 7);
 
   return (
     <div className="poster-card">
@@ -45,7 +43,7 @@ export const TimelineSection: FC<{ control: RfpControlType }> = ({
                 disabled={(v) => v.getTime() < minSubmissionDate.getTime()}
               />
               <FormDescription className="text-xs text-pine-shadow-60 leading-tight">
-                The date by which project submissions must be received. Must be at least 7 days after the worst-case funding date ({formatDate(minSubmissionDate)}).
+                The date by which project submissions must be received. Must be at least 7 days from today.
               </FormDescription>
               <FormMessage className="text-tomato-stamp text-xs" />
             </FormItem>

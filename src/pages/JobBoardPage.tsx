@@ -17,7 +17,7 @@ const API_URLS = {
 
 type SortKey = "date" | "amount" | "title"
 type SortOrder = "asc" | "desc"
-type StatusFilter = "all" | "active" | "proposed" | "accepting-submissions" | "in-progress" | "completed"
+type StatusFilter = "all" | "proposed" | "accepting-submissions" | "in-progress" | "completed"
 
 interface BountyWithChildren extends SubsquareBountyItem {
   childBounties?: SubsquareChildBountiesResponse
@@ -296,7 +296,7 @@ export const JobBoardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [sortKey, setSortKey] = useState<SortKey>("date")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active")
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("accepting-submissions")
 
   useEffect(() => {
     const fetchRfpFromSearch = async (network: "kusama" | "polkadot"): Promise<BountyWithChildren[]> => {
@@ -579,10 +579,7 @@ export const JobBoardPage: React.FC = () => {
           status = "in-progress"
         }
         
-        if (statusFilter === "active") {
-          // Active means not proposed and not completed
-          return status !== "proposed" && status !== "completed"
-        } else if (statusFilter === "proposed") {
+        if (statusFilter === "proposed") {
           return status === "proposed"
         } else if (statusFilter === "accepting-submissions") {
           return status === "accepting-submissions"
@@ -665,10 +662,9 @@ export const JobBoardPage: React.FC = () => {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="accepting-submissions">Accepting Submissions</SelectItem>
               <SelectItem value="all">All RFPs</SelectItem>
               <SelectItem value="proposed">Proposed</SelectItem>
-              <SelectItem value="accepting-submissions">Accepting Submissions</SelectItem>
               <SelectItem value="in-progress">In Progress</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
@@ -710,9 +706,9 @@ export const JobBoardPage: React.FC = () => {
           </Select>
         </div>
         
-        {statusFilter === "active" && (
+        {statusFilter === "accepting-submissions" && (
           <div className="text-xs text-pine-shadow-60 text-center">
-            Active RFPs are those currently accepting submissions or in progress (excludes proposed and completed RFPs)
+            Showing RFPs that are currently accepting submissions
           </div>
         )}
       </div>
