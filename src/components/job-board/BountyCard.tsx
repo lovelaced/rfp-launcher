@@ -21,6 +21,7 @@ interface BountyCardProps {
     childBounties?: SubsquareChildBountiesResponse
     network?: "kusama" | "polkadot"
     submissionDeadline?: Date | null
+    projectCompletionDate?: Date | null
     curatorAcceptedDate?: Date | null
   }
 }
@@ -38,19 +39,22 @@ export const BountyCard: React.FC<BountyCardProps> = ({ bounty }) => {
   // Determine actual status based on timeline
   const determineStatus = () => {
     const state = bounty.onchainData?.state?.state
+    const now = new Date()
     
     // If bounty is "Proposed", it's not yet active
     if (state === "Proposed") {
       return { label: "Proposed", color: "text-pine-shadow" }
     }
     
-    // No need to check for curator acceptance since RFPs have automatic curator assignment
+    // Check if project is completed (past completion date)
+    if (bounty.projectCompletionDate && now > bounty.projectCompletionDate) {
+      return { label: "Completed", color: "text-pine-shadow-60" }
+    }
     
     // For Active/Funded bounties, check submission deadline
     if (state === "Active" || state === "Funded") {
       // Check if we have a calculated submission deadline
       if (bounty.submissionDeadline) {
-        const now = new Date()
         if (now < bounty.submissionDeadline) {
           return { label: "Accepting Submissions", color: "text-lilypad" }
         }

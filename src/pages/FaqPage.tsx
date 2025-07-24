@@ -284,10 +284,12 @@ export const FaqPage = () => {
       question: "How long does the process take?",
       answer: (
         <div className="space-y-2">
-          <p>Process timing varies between networks:</p>
+          <p>Process timing varies between networks and proposal types:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Polkadot Tips/RFPs:</strong> ~28 days for the referendum voting period</li>
-            <li><strong>Kusama Tips/RFPs:</strong> ~7 days for the referendum voting period</li>
+            <li><strong>Polkadot Tips:</strong> Up to 7 days for the referendum voting period</li>
+            <li><strong>Polkadot RFPs:</strong> 7 to 35 days for the referendum voting period</li>
+            <li><strong>Kusama Tips:</strong> Up to 7 days for the referendum voting period</li>
+            <li><strong>Kusama RFPs:</strong> 7 to 16 days for the referendum voting period</li>
             <li><strong>Child RFPs:</strong> Can be created immediately if you're a curator (both networks)</li>
           </ul>
           <p className="text-sm mt-2">

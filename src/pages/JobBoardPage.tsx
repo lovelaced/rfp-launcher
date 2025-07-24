@@ -15,12 +15,13 @@ const API_URLS = {
 
 type SortKey = "date" | "amount" | "title"
 type SortOrder = "asc" | "desc"
-type StatusFilter = "all" | "proposed" | "accepting-submissions" | "in-progress"
+type StatusFilter = "all" | "active" | "proposed" | "accepting-submissions" | "in-progress" | "completed"
 
 interface BountyWithChildren extends SubsquareBountyItem {
   childBounties?: SubsquareChildBountiesResponse
   network: "kusama" | "polkadot"
   submissionDeadline?: Date | null
+  projectCompletionDate?: Date | null
   curatorAcceptedDate?: Date | null
 }
 
@@ -64,10 +65,49 @@ const parseSubmissionDeadline = (content: string): Date | null => {
   return null
 }
 
+// Helper function to parse project completion date from content
+const parseProjectCompletionDate = (content: string): Date | null => {
+  // Look for patterns like "Monday, January 15 - Project completion"
+  const datePatterns = [
+    /(\w+,\s*\w+\s+\d+)\s*[-–]\s*[Pp]roject\s*[Cc]ompletion/i,
+    /[Pp]roject\s*[Cc]ompletion\s*[-–]\s*(\w+,\s*\w+\s+\d+)/i,
+    /(\w+,\s*\w+\s+\d+,\s*\d{4})\s*[-–]\s*[Pp]roject\s*[Cc]ompletion/i,
+    /[Pp]roject\s*[Cc]ompletion\s*[Dd]ate\s*[-–:]\s*(\w+,\s*\w+\s+\d+)/i,
+  ]
+  
+  for (const pattern of datePatterns) {
+    const match = content.match(pattern)
+    if (match && match[1]) {
+      const dateStr = match[1]
+      let parsed = new Date(dateStr)
+      
+      // If no year is specified, assume current year or next year if date has passed
+      if (!dateStr.match(/\d{4}/)) {
+        const currentYear = new Date().getFullYear()
+        parsed = new Date(`${dateStr}, ${currentYear}`)
+        
+        // If the date is in the past by more than 6 months, assume it's next year
+        const sixMonthsAgo = new Date()
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+        if (parsed < sixMonthsAgo) {
+          parsed = new Date(`${dateStr}, ${currentYear + 1}`)
+        }
+      }
+      
+      if (!isNaN(parsed.getTime())) {
+        return parsed
+      }
+    }
+  }
+  
+  return null
+}
+
 // Helper function to determine actual bounty status based on timeline
 const determineBountyStatus = (bounty: SubsquareBountyItem): { 
-  status: "proposed" | "accepting-submissions" | "in-progress", 
+  status: "proposed" | "accepting-submissions" | "in-progress" | "completed", 
   submissionDeadline: Date | null,
+  projectCompletionDate: Date | null,
   curatorAcceptedDate: Date | null 
 } => {
   const timeline = bounty.onchainData?.timeline || []
@@ -79,11 +119,12 @@ const determineBountyStatus = (bounty: SubsquareBountyItem): {
   
   // If bounty is "Proposed", it's not yet active
   if (state === "Proposed") {
-    return { status: "proposed", submissionDeadline: null, curatorAcceptedDate: null }
+    return { status: "proposed", submissionDeadline: null, projectCompletionDate: null, curatorAcceptedDate: null }
   }
   
-  // Parse submission deadline from content
+  // Parse submission deadline and project completion date from content
   let submissionDeadline = parseSubmissionDeadline(content)
+  const projectCompletionDate = parseProjectCompletionDate(content)
   
   // Handle legacy week-based format (negative timestamp indicates weeks)
   if (submissionDeadline && submissionDeadline.getTime() < 0) {
@@ -108,13 +149,20 @@ const determineBountyStatus = (bounty: SubsquareBountyItem): {
     }
   }
   
-  // Check if we're still in submission period
+  // Check bounty status based on dates
   const now = new Date()
-  if (submissionDeadline && now < submissionDeadline) {
-    return { status: "accepting-submissions", submissionDeadline, curatorAcceptedDate: null }
+  
+  // Check if project is completed (past completion date)
+  if (projectCompletionDate && now > projectCompletionDate) {
+    return { status: "completed", submissionDeadline, projectCompletionDate, curatorAcceptedDate: null }
   }
   
-  return { status: "in-progress", submissionDeadline, curatorAcceptedDate: null }
+  // Check if we're still in submission period
+  if (submissionDeadline && now < submissionDeadline) {
+    return { status: "accepting-submissions", submissionDeadline, projectCompletionDate, curatorAcceptedDate: null }
+  }
+  
+  return { status: "in-progress", submissionDeadline, projectCompletionDate, curatorAcceptedDate: null }
 }
 
 export const JobBoardPage: React.FC = () => {
@@ -124,7 +172,7 @@ export const JobBoardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [sortKey, setSortKey] = useState<SortKey>("date")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active")
 
   useEffect(() => {
     const fetchBountiesFromNetwork = async (network: "kusama" | "polkadot"): Promise<BountyWithChildren[]> => {
@@ -157,6 +205,7 @@ export const JobBoardPage: React.FC = () => {
                   childBounties: childData, 
                   network,
                   submissionDeadline: statusInfo.submissionDeadline,
+                  projectCompletionDate: statusInfo.projectCompletionDate,
                   curatorAcceptedDate: statusInfo.curatorAcceptedDate
                 }
               }
@@ -170,6 +219,7 @@ export const JobBoardPage: React.FC = () => {
               childBounties: { items: [], page: 1, pageSize: 100, total: 0 }, 
               network,
               submissionDeadline: statusInfo.submissionDeadline,
+              projectCompletionDate: statusInfo.projectCompletionDate,
               curatorAcceptedDate: statusInfo.curatorAcceptedDate
             }
           })
@@ -218,13 +268,39 @@ export const JobBoardPage: React.FC = () => {
     // Apply status filter based on timeline analysis
     if (statusFilter !== "all") {
       filtered = filtered.filter(bounty => {
-        const statusInfo = determineBountyStatus(bounty)
-        if (statusFilter === "proposed") {
-          return statusInfo.status === "proposed"
+        // Use the already-parsed dates if available
+        const now = new Date()
+        let status: string
+        
+        // Check if bounty is proposed
+        if (bounty.onchainData?.state?.state === "Proposed") {
+          status = "proposed"
+        }
+        // Check if project is completed (past completion date)
+        else if (bounty.projectCompletionDate && now > bounty.projectCompletionDate) {
+          status = "completed"
+        }
+        // Check if accepting submissions
+        else if (bounty.submissionDeadline && now < bounty.submissionDeadline) {
+          status = "accepting-submissions"
+        }
+        // Otherwise it's in progress
+        else {
+          status = "in-progress"
+        }
+        
+        if (statusFilter === "active") {
+          // Active means not proposed and not completed
+          return status !== "proposed" && status !== "completed"
+        } else if (statusFilter === "proposed") {
+          return status === "proposed"
         } else if (statusFilter === "accepting-submissions") {
-          return statusInfo.status === "accepting-submissions"
+          return status === "accepting-submissions"
         } else if (statusFilter === "in-progress") {
-          return statusInfo.status === "in-progress" || (bounty.childBounties && bounty.childBounties.total > 0)
+          // Only show RFPs that are in-progress (not completed, not proposed, not accepting submissions)
+          return status === "in-progress"
+        } else if (statusFilter === "completed") {
+          return status === "completed"
         }
         return true
       })
@@ -300,10 +376,12 @@ export const JobBoardPage: React.FC = () => {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
               <SelectItem value="all">All RFPs</SelectItem>
               <SelectItem value="proposed">Proposed</SelectItem>
               <SelectItem value="accepting-submissions">Accepting Submissions</SelectItem>
               <SelectItem value="in-progress">In Progress</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
           <Select onValueChange={(value) => setSortKey(value as SortKey)} value={sortKey}>
@@ -342,6 +420,12 @@ export const JobBoardPage: React.FC = () => {
             </SelectContent>
           </Select>
         </div>
+        
+        {statusFilter === "active" && (
+          <div className="text-xs text-pine-shadow-60 text-center">
+            Active RFPs are those currently accepting submissions or in progress (excludes proposed and completed RFPs)
+          </div>
+        )}
       </div>
 
       {isLoading && (
