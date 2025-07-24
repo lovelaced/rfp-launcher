@@ -72,44 +72,122 @@ const parseSubmissionDeadline = (content: string): Date | null => {
 
 // Helper function to parse project completion date from content
 const parseProjectCompletionDate = (content: string): Date | null => {
-  // Look for patterns like "Monday, January 15 - Project completion"
-  const datePatterns = [
-    /(\w+,\s*\w+\s+\d+)\s*[-–]\s*[Pp]roject\s*[Cc]ompletion/i,
-    /[Pp]roject\s*[Cc]ompletion\s*[-–]\s*(\w+,\s*\w+\s+\d+)/i,
-    /(\w+,\s*\w+\s+\d+,\s*\d{4})\s*[-–]\s*[Pp]roject\s*[Cc]ompletion/i,
-    /[Pp]roject\s*[Cc]ompletion\s*[Dd]ate\s*[-–:]\s*(\w+,\s*\w+\s+\d+)/i,
-  ]
+  // Simply get all dates and return the last one as the likely project completion date
+  const allDates = parseAllTimelineDates(content)
   
-  for (const pattern of datePatterns) {
-    const match = content.match(pattern)
-    if (match && match[1]) {
-      const dateStr = match[1]
-      let parsed = new Date(dateStr)
-      
-      // If no year is specified, assume current year or next year if date has passed
-      if (!dateStr.match(/\d{4}/)) {
-        const currentYear = new Date().getFullYear()
-        parsed = new Date(`${dateStr}, ${currentYear}`)
-        
-        // If the date is in the past by more than 6 months, assume it's next year
-        const sixMonthsAgo = new Date()
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-        if (parsed < sixMonthsAgo) {
-          parsed = new Date(`${dateStr}, ${currentYear + 1}`)
-        }
-      }
-      
-      if (!isNaN(parsed.getTime())) {
-        return parsed
-      }
-    }
+  if (allDates.length > 0) {
+    // Sort dates chronologically and return the last one
+    allDates.sort((a, b) => a.getTime() - b.getTime())
+    return allDates[allDates.length - 1]
   }
   
   return null
 }
 
+// Helper function to parse any timeline date (for checking if all dates have passed)
+const parseAllTimelineDates = (content: string): Date[] => {
+  const dates: Date[] = []
+  
+  // Try different timeline section patterns
+  let timelineContent = ""
+  
+  // Try ## Timeline pattern first
+  const timelineMatch = content.match(/##\s*Timeline[\s\S]*?(?=\n##|$)/i)
+  if (timelineMatch) {
+    timelineContent = timelineMatch[0]
+  } else {
+    // Try bold **Timeline** pattern
+    const boldMatch = content.match(/\*\*Timeline\*\*:?[\s\S]*?(?=\n\*\*|\n##|$)/i)
+    if (boldMatch) {
+      timelineContent = boldMatch[0]
+    } else {
+      // Try simple Timeline: pattern
+      const simpleMatch = content.match(/Timeline:[\s\S]*?(?=\n\n|$)/i)
+      if (simpleMatch) {
+        timelineContent = simpleMatch[0]
+      } else {
+        // Look for timeline information in sentences
+        const sentenceMatch = content.match(/(?:timeline|schedule)(?:\s+(?:includes?|is|are))?[\s\S]*?(?:\.|$)/i)
+        if (sentenceMatch) {
+          timelineContent = sentenceMatch[0]
+        }
+      }
+    }
+  }
+  
+  // If no timeline section found, search the entire content for dates
+  if (!timelineContent) {
+    timelineContent = content
+  }
+  
+  // Look for date patterns in various formats
+  const datePatterns = [
+    // "Monday, January 15" or "Monday, January 15, 2024"
+    /(\w+,\s*\w+\s+\d+(?:,\s*\d{4})?)/g,
+    // "January 15, 2024"
+    /(\w+\s+\d+,\s*\d{4})/g,
+    // "June 8" or "July 16" - simple month + day
+    /\b((?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2})\b/gi,
+    // "15th January" or "8th June"
+    /\b(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December))\b/gi,
+    // "Jan 15" or "Jul 16" - abbreviated months
+    /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2})\b/gi
+  ]
+  
+  for (const pattern of datePatterns) {
+    const matches = timelineContent.matchAll(pattern)
+    for (const match of matches) {
+      const dateStr = match[1]
+      let parsed: Date
+      
+      // If no year is specified, we need to be smart about which year to use
+      if (!dateStr.match(/\d{4}/)) {
+        const currentDate = new Date()
+        const currentYear = currentDate.getFullYear()
+        
+        // Try parsing with current year first
+        parsed = new Date(`${dateStr}, ${currentYear}`)
+        
+        // If invalid date, try different formats
+        if (isNaN(parsed.getTime())) {
+          // Try formats like "15th January" -> "January 15"
+          const ordinalMatch = dateStr.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(\w+)/)
+          if (ordinalMatch) {
+            parsed = new Date(`${ordinalMatch[2]} ${ordinalMatch[1]}, ${currentYear}`)
+          } else {
+            parsed = new Date(dateStr)
+          }
+        }
+        
+        // If still invalid, skip this date
+        if (isNaN(parsed.getTime())) {
+          continue
+        }
+        
+        // If the date is more than 6 months in the future, assume it's from last year
+        const sixMonthsFuture = new Date()
+        sixMonthsFuture.setMonth(sixMonthsFuture.getMonth() + 6)
+        if (parsed > sixMonthsFuture) {
+          parsed = new Date(`${dateStr}, ${currentYear - 1}`)
+        }
+      } else {
+        parsed = new Date(dateStr)
+        if (isNaN(parsed.getTime())) {
+          continue
+        }
+      }
+      
+      if (!isNaN(parsed.getTime())) {
+        dates.push(parsed)
+      }
+    }
+  }
+  
+  return dates
+}
+
 // Helper function to determine actual bounty status based on timeline
-const determineBountyStatus = (bounty: SubsquareBountyItem): { 
+const determineBountyStatus = (bounty: SubsquareBountyItem & { isReferendum?: boolean; bountyIndex?: number }): { 
   status: "proposed" | "accepting-submissions" | "in-progress" | "completed", 
   submissionDeadline: Date | null,
   projectCompletionDate: Date | null,
@@ -119,7 +197,48 @@ const determineBountyStatus = (bounty: SubsquareBountyItem): {
   const state = bounty.onchainData?.state?.state
   const content = bounty.content || ""
   
-  // Find key events in timeline
+  // For Polkadot referenda, check if it's still in voting or rejected
+  if (bounty.isReferendum) {
+    // States like "Deciding", "Confirming" mean it's still being voted on
+    if (["Deciding", "Confirming", "Queueing", "Preparing", "Submitted"].includes(state)) {
+      return { status: "proposed", submissionDeadline: null, projectCompletionDate: null, curatorAcceptedDate: null }
+    }
+    
+    // For executed referenda, we need to check the actual timeline dates
+    if (state === "Executed") {
+      // Parse the dates from content
+      const submissionDeadline = parseSubmissionDeadline(content)
+      const projectCompletionDate = parseProjectCompletionDate(content)
+      
+      // Also get all timeline dates to check if everything is complete
+      const allTimelineDates = parseAllTimelineDates(content)
+      const now = new Date()
+      
+      
+      // Check if ALL timeline dates have passed (indicating completion)
+      if (allTimelineDates.length > 0) {
+        const allDatesPassed = allTimelineDates.every(date => now > date)
+        if (allDatesPassed) {
+          return { status: "completed", submissionDeadline, projectCompletionDate, curatorAcceptedDate: null }
+        }
+      }
+      
+      // If no timeline dates found but project completion date exists and passed
+      if (projectCompletionDate && now > projectCompletionDate) {
+        return { status: "completed", submissionDeadline, projectCompletionDate, curatorAcceptedDate: null }
+      }
+      
+      // Check if we're still accepting submissions
+      if (submissionDeadline && now < submissionDeadline) {
+        return { status: "accepting-submissions", submissionDeadline, projectCompletionDate, curatorAcceptedDate: null }
+      }
+      
+      // Otherwise it's in progress
+      return { status: "in-progress", submissionDeadline, projectCompletionDate, curatorAcceptedDate: null }
+    }
+  }
+  
+  // Find key events in timeline (for bounties)
   const becameActiveEvent = timeline.find(event => event.method === "BountyBecameActive")
   
   // If bounty is "Proposed", it's not yet active
@@ -196,12 +315,14 @@ export const JobBoardPage: React.FC = () => {
         // For Polkadot: only get referenda (not treasury spends which are duplicates)
         // For Kusama: only get bounties
         if (network === "polkadot") {
-          // Only get openGov referenda for Polkadot, filter out rejected
           const referenda = data.openGovReferenda || []
+          
           allRfpItems = referenda.filter((item: any) => {
             // Filter out rejected referenda
             const state = item.state?.name || item.state || ""
-            return state !== "Rejected" && state !== "Cancelled" && state !== "TimedOut"
+            const isRejected = state === "Rejected" || state === "Cancelled" || state === "TimedOut"
+            
+            return !isRejected
           })
         } else {
           // Only get bounties and child bounties for Kusama
@@ -244,17 +365,23 @@ export const JobBoardPage: React.FC = () => {
           // Extract content from contentSummary if available
           const content = item.content || item.contentSummary?.summary || ""
           
-          const statusInfo = determineBountyStatus({
+          const bountyForStatus = {
             ...item,
             onchainData: {
               ...item.onchainData,
               state: { state: item.state?.name || item.state || "Active" },
               timeline: item.onchainData?.timeline || []
             },
-            content: content
-          })
+            content: content,
+            isReferendum: isReferendum,
+            bountyIndex: index
+          }
           
-          return {
+          
+          const statusInfo = determineBountyStatus(bountyForStatus)
+          
+          const result: BountyWithChildren = {
+            ...item, // Keep all original properties including isPaid
             bountyIndex: index,
             title: item.title || `RFP #${index}`,
             content: content,
@@ -279,7 +406,10 @@ export const JobBoardPage: React.FC = () => {
             // Store currency info for proper display
             currency: currency,
             assetKind: assetKind
-          } as BountyWithChildren
+          }
+          
+          
+          return result
         })
       } catch (err) {
         console.error(`Error fetching ${network} RFP search results:`, err)
@@ -466,7 +596,6 @@ export const JobBoardPage: React.FC = () => {
       })
     }
     
-    // Debug logging
 
     // Sorting logic
     filtered.sort((a, b) => {
