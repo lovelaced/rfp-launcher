@@ -37,9 +37,7 @@ import {
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
@@ -126,21 +124,12 @@ export const BountyCheck: FC<{
   });
   const bounty = bounties.find((b) => b.id === selectedBountyId);
 
-  const [accountBounties, sortedBounties] = useMemo(() => {
-    const allSortedBounties = bounties.sort((a, b) => a.id - b.id);
-
-    const [accountBounties, sortedBounties] = account
-      ? [
-          allSortedBounties.filter((b) =>
-            b.signers.includes(accId.dec(accId.enc(account.address))),
-          ),
-          allSortedBounties.filter(
-            (b) => !b.signers.includes(accId.dec(accId.enc(account.address))),
-          ),
-        ]
-      : [[], allSortedBounties];
-
-    return [accountBounties, sortedBounties];
+  const accountBounties = useMemo(() => {
+    if (!account) return [];
+    
+    return bounties
+      .filter((b) => b.signers.includes(accId.dec(accId.enc(account.address))))
+      .sort((a, b) => a.id - b.id);
   }, [bounties, account]);
 
   if (!account) return null;
@@ -193,30 +182,17 @@ export const BountyCheck: FC<{
                   <SelectValue placeholder="Choose a bounty" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Your bounties</SelectLabel>
-                    {accountBounties.length ? (
-                      accountBounties.map((bounty) => (
-                        <SelectItem key={bounty.id} value={String(bounty.id)}>
-                          {bounty.id}. {bounty.description}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectLabel className="font-bold">
-                        The account you selected doesn't seem to have a curator
-                        role for any of the bounties. You will need to sign it
-                        with a curator account.
-                      </SelectLabel>
-                    )}
-                  </SelectGroup>
-                  <SelectGroup>
-                    <SelectLabel>Active bounties</SelectLabel>
-                    {sortedBounties.map((bounty) => (
+                  {accountBounties.length ? (
+                    accountBounties.map((bounty) => (
                       <SelectItem key={bounty.id} value={String(bounty.id)}>
                         {bounty.id}. {bounty.description}
                       </SelectItem>
-                    ))}
-                  </SelectGroup>
+                    ))
+                  ) : (
+                    <div className="p-3 text-sm text-pine-shadow-60">
+                      No bounties found where you are a curator. You need to be a curator of a parent bounty to create a child RFP.
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </FormControl>

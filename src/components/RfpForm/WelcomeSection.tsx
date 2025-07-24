@@ -59,10 +59,10 @@ export const WelcomeSection: FC<{ control: RfpControlType }> = ({
                   <button
                     type="button"
                     onClick={() => field.onChange(false)}
-                    className={`p-6 rounded-lg border transition-all text-left ${
+                    className={`p-6 rounded-lg border transition-all text-left cursor-pointer transform hover:scale-[1.02] active:scale-[0.98] ${
                       !field.value 
-                        ? "border-lilypad bg-lilypad/10 shadow-sm" 
-                        : "border-pine-shadow-20 hover:border-pine-shadow-40 hover:bg-canvas-cream/50"
+                        ? "border-lilypad bg-lilypad/10 shadow-md hover:shadow-lg" 
+                        : "border-pine-shadow-20 hover:border-pine-shadow-60 hover:bg-pine-shadow-10 hover:shadow-md"
                     }`}
                   >
                     <div className="font-medium text-lg mb-2 text-midnight-koi">
@@ -76,10 +76,10 @@ export const WelcomeSection: FC<{ control: RfpControlType }> = ({
                   <button
                     type="button"
                     onClick={() => field.onChange(true)}
-                    className={`p-6 rounded-lg border transition-all text-left ${
+                    className={`p-6 rounded-lg border transition-all text-left cursor-pointer transform hover:scale-[1.02] active:scale-[0.98] ${
                       field.value 
-                        ? "border-lilypad bg-lilypad/10 shadow-sm" 
-                        : "border-pine-shadow-20 hover:border-pine-shadow-40 hover:bg-canvas-cream/50"
+                        ? "border-lilypad bg-lilypad/10 shadow-md hover:shadow-lg" 
+                        : "border-pine-shadow-20 hover:border-pine-shadow-60 hover:bg-pine-shadow-10 hover:shadow-md"
                     }`}
                   >
                     <div className="font-medium text-lg mb-2 text-midnight-koi">
