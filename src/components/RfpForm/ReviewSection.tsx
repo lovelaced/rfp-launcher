@@ -378,7 +378,7 @@ const TimelineSummary: FC<{
 
         <div className="grid grid-cols-[1fr,auto] gap-x-4 items-baseline">
           <span className="text-sm text-pine-shadow">
-            Funds Expiry Deadline
+            Submission Deadline
           </span>
           <span className="text-xs text-midnight-koi font-mono tabular-nums text-right">
             {formatDate(submissionDeadline)}
@@ -416,7 +416,7 @@ const TimelineSummary: FC<{
           <div className="flex items-center gap-2 text-tomato-stamp">
             <TriangleAlert size={16} />
             <span className="text-sm font-medium">
-              Please allow at least 7 days for development after funding expires
+              Please allow at least 7 days for development after submission deadline
             </span>
           </div>
           <div className="pl-1">
@@ -428,7 +428,7 @@ const TimelineSummary: FC<{
               disabled={(date) => date.getTime() < minCompletionDate.getTime()}
             />
             <p className="text-xs text-pine-shadow-60 mt-1">
-              Funding expiry is{" "}
+              Submission deadline is{" "}
               {submissionDeadline ? formatDate(submissionDeadline) : "N/A"}.
               Select a date on or after {formatDate(minCompletionDate)}.
             </p>
