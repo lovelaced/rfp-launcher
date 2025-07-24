@@ -1,7 +1,6 @@
 import { FC } from "react";
 import { useStateObservable } from "@react-rxjs/core";
 import { PolkadotIdenticon } from "@polkadot-api/react-components";
-import { sliceMiddleAddr } from "@/lib/ss58";
 import { getSs58AddressInfo } from "polkadot-api";
 // Import from RfpForm identity which uses the chain-aware peopleApi
 import { identity$ } from "@/components/RfpForm/data/identity";
