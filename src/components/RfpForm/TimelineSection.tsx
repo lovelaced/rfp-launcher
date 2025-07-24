@@ -18,7 +18,6 @@ import type { RfpControlType } from "./formSchema";
 export const TimelineSection: FC<{ control: RfpControlType }> = ({
   control,
 }) => {
-  const estimatedTimeline = useStateObservable(estimatedTimeline$);
   const submissionDeadline = useWatch({ name: "submissionDeadline", control });
 
   // Calculate minimum submission deadline (7 days from today)
